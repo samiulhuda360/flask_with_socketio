@@ -15,7 +15,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"  # or "None" if necessary
-app.config['SESSION_COOKIE_SECURE'] = True  # Only if you set SameSite to "None"
+app.config['SESSION_COOKIE_SECURE'] = False
 
 app.secret_key = 'some_secret'
 
@@ -117,6 +117,8 @@ def serve_socketio_js():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
     if request.method == 'POST':
         # Dummy logic: replace with real authentication logic
         username = request.form['username']
