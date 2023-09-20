@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Building Automation Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='custom-css.css') }}" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
+</head>
+
+<body class="container-fluid no-padding">
+        <!-- Navbar with Home, Site Data and Logout -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">Lord of Links</a> <!-- You can replace "BrandName" with your actual brand or site name -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/site-manager">Site Data</a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="/config">Config Data</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-danger" href="/logout">Logout</a><!-- Styled as a button but functions as a link -->
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+
+
+    <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
+        <div class="mb-3">
+            <label for="excel_file" class="form-label">Select an Excel file</label>
+            <input type="file" class="form-control mb-3" name="excel_file" id="excel_file">
+            <input type="checkbox" name="use_images" id="use_images" value="True">
+            <label for="use_images">Use Images</label>
+        </div>
+        <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
+    </form>
+
+<div class="row">
+    <!-- Group the first three buttons on the left -->
+    <div class="col-md-9">
+        <a href="/uploaded_excel" download="matched_data.xlsx" class="btn btn-info mb-4">Download Link Report</a>
+        <a href="/matched_excel" download="matched_data.xlsx" class="btn btn-info mb-4">Download Matched Report</a>
+    </div>
+
+    <!-- Align the last button to the right -->
+    <div class="col-md-3 text-md-right">
+        <a onclick="stopProcessing()" class="btn btn-danger mb-4">Stop The Process</a>
+    </div>
+</div>
+
+<!--    <button onclick="stopProcessing()">Stop Processing</button>-->
+
+
+
+
+    <h2 class="text-center">Link Building Update</h2>
+    <div id="tableContainer" class="table-responsive">
+        <table id="dataTable" class="table table-info table-bordered">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Anchor</th>
+                    <th>Linking URL</th>
+                    <th>Topic</th>
+                    <th>Live URL</th>
+                    <th>Live URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Table rows will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">
+        <!-- Confirmation messages will be shown here -->
+</div>
+
+
+<script>
+function stopProcessing() {
+    // Use AJAX to send a POST request to the /stop_processing route
+    fetch('/stop_processing', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => alert(data.message))
+        .catch(error => console.error('Error:', error));
+}
+</script>
+
+<script>
+      document.addEventListener("DOMContentLoaded", function() {
+
+    // Helper functions
+    function createElement(tag, attrs, children) {
+        const el = document.createElement(tag);
+        for (let key in attrs) {
+            el[key] = attrs[key];
+        }
+        if (children) {
+            children.forEach(child => el.appendChild(child));
+        }
+        return el;
+    }
+
+    function createAndAppendTableRows(dataJSON) {
+        const tableBody = document.querySelector('#dataTable tbody');
+        tableBody.innerHTML = ''; // Clear the existing table rows
+
+        dataJSON.forEach(dataItem => {
+            const row = createElement('tr', {}, []);
+
+            ['id', 'anchor', 'linking_url', 'topic', 'live_url', 'Host_site'].forEach(column => {
+                const cell = createElement('td', {textContent: dataItem[column]});
+                row.appendChild(cell);
+            });
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Form submission handling
+    document.getElementById("uploadForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        // Show the spinner when processing starts
+        document.getElementById("progress").style.display = "block";
+
+        fetch('/start_emit', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data.message) {
+                document.getElementById("progressText").innerText = data.message;
+            }
+        });
+    });
+    // Setup socket.io connection
+     // Socket.io setup with enhanced error handling
+    const socket = io.connect('http://' + document.domain + ':' + location.port, {
+        'reconnection': true,
+        'reconnectionDelay': 500,  // Initial delay (milliseconds)
+        'reconnectionAttempts': 5   // Max reconnection attempts
+    });
+
+    // Successful connection
+    socket.on('connect', function() {
+        console.log('Connected to the server.');
+    });
+
+    // Handling connection error
+    socket.on('connect_error', function(error) {
+        console.error('Connection error:', error);
+    });
+
+    // Handling connection timeout
+    socket.on('connect_timeout', function() {
+        console.error('Connection timeout.');
+    });
+
+    // Handling reconnection attempt
+    socket.on('reconnecting', function(attemptNumber) {
+        console.log(`Attempting to reconnect. Attempt number ${attemptNumber}`);
+    });
+
+    // Handling failed reconnection
+    socket.on('reconnect_failed', function() {
+        console.error('Failed to reconnect after multiple attempts.');
+    });
+
+    // Handling successful reconnection
+    socket.on('reconnect', function(attemptNumber) {
+        console.log(`Successfully reconnected on attempt number ${attemptNumber}.`);
+    });
+
+    socket.on('update', function(data) {
+        if (data.data) {
+            createAndAppendTableRows(JSON.parse(data.data));
+        }
+
+        if (data.message) {
+            const messageDiv = document.getElementById('confirmationMessage');
+            messageDiv.innerHTML = data.message;
+        }
+    });
+
+    // Progress Spinner and Text setup
+    const progressDiv = createElement('div', {id: 'progress', style: 'display: none'});
+    const spinner = createElement('div', {className: 'spinner-border text-primary', role: 'status'});
+    const span = createElement('span', {className: 'sr-only', innerText: 'Processing...'});
+    const progressText = createElement('p', {id: 'progressText', innerText: 'Processing...'});
+
+    spinner.appendChild(span);
+    progressDiv.appendChild(spinner);
+    progressDiv.appendChild(progressText);
+    document.body.appendChild(progressDiv);
+
+});
+
+    </script>
+<!-- Bootstrap JS, Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+</html>
