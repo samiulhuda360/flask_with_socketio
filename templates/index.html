@@ -66,12 +66,11 @@
     </div>
 </div>
 
-<!--    <button onclick="stopProcessing()">Stop Processing</button>-->
-
-
-
 
     <h2 class="text-center">Link Building Update</h2>
+    <div id="progressContainer" class="text-center" style="display: block;">
+    <!-- The spinner and text will be inserted here by the script -->
+    </div>
     <div id="tableContainer" class="table-responsive">
         <table id="dataTable" class="table table-info table-bordered">
             <thead>
@@ -143,7 +142,7 @@ function stopProcessing() {
         const formData = new FormData(this);
 
         // Show the spinner when processing starts
-        document.getElementById("progress").style.display = "block";
+    document.getElementById("progress").style.display = "block";
 
         fetch('/start_emit', {
             method: 'POST',
@@ -216,24 +215,26 @@ function stopProcessing() {
     spinner.appendChild(span);
     progressDiv.appendChild(spinner);
     progressDiv.appendChild(progressText);
-    document.body.appendChild(progressDiv);
+    document.getElementById("progressContainer").appendChild(progressDiv);
 
-    socket.on('update', function(data) {
-        if (data.data) {
-            createAndAppendTableRows(JSON.parse(data.data));
+socket.on('update', function(data) {
+    if (data.data) {
+        createAndAppendTableRows(JSON.parse(data.data));
+    }
+
+    if (data.message) {
+        const messageDiv = document.getElementById('confirmationMessage');
+        messageDiv.innerHTML = data.message;
+        messageDiv.style.display = "block";
+
+        // Check for the specific stop message
+        if (data.message === "Process stopped" || data.message === "Processing complete.") {
+            // Hide the spinner
+            document.getElementById("progress").style.display = "none";
         }
+    }
+});
 
-        if (data.message) {
-            const messageDiv = document.getElementById('confirmationMessage');
-            messageDiv.innerHTML = data.message;
-
-            // Check for the specific stop message
-            if (data.message === "Process stopped" || data.message === "Processing complete.") {
-                // Hide the spinner
-                document.getElementById("progress").style.display = "none";
-            }
-        }
-    });
 
 
 });
