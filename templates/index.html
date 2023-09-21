@@ -203,6 +203,7 @@ function stopProcessing() {
         if (data.message) {
             const messageDiv = document.getElementById('confirmationMessage');
             messageDiv.innerHTML = data.message;
+            messageDiv.style.display = "block";
         }
     });
 
@@ -217,9 +218,27 @@ function stopProcessing() {
     progressDiv.appendChild(progressText);
     document.body.appendChild(progressDiv);
 
+    socket.on('update', function(data) {
+        if (data.data) {
+            createAndAppendTableRows(JSON.parse(data.data));
+        }
+
+        if (data.message) {
+            const messageDiv = document.getElementById('confirmationMessage');
+            messageDiv.innerHTML = data.message;
+
+            // Check for the specific stop message
+            if (data.message === "Process stopped" || data.message === "Processing complete.") {
+                // Hide the spinner
+                document.getElementById("progress").style.display = "none";
+            }
+        }
+    });
+
+
 });
 
-    </script>
+ </script>
 <!-- Bootstrap JS, Popper.js -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
 </div>

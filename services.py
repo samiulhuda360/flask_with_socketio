@@ -11,7 +11,6 @@ from config import Pexels_API_ENDPOINT
 from random import randrange
 
 
-
 def process_image(keyword, USE_IMAGES):
     if not USE_IMAGES:
         return None
@@ -313,7 +312,6 @@ def process_site(site_json, host_site, user, password, topic, anchor, client_lin
     else:
         image_data = None  # or some default value
         post_id = ""
-
     final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES)
     post_url = post_article(site_json, headers, topic, final_content, post_id, USE_IMAGES)
 

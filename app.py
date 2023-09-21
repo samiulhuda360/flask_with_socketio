@@ -1,4 +1,4 @@
-import asyncio
+# import asyncio
 from flask import Flask, render_template, request, jsonify, send_file, session
 from services import (process_site, save_data_to_excel, get_all_sitenames, get_url_data_from_db, save_matched_to_excel)
 from flask_socketio import SocketIO, emit
@@ -17,7 +17,7 @@ app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"  # or "None" if necessary
 app.config['SESSION_COOKIE_SECURE'] = False
 
-app.secret_key = 'some_secret'
+app.secret_key = 'sdfadfasdfasdfasdfasdf'
 
 # Set this to True if you want to use images, and False if not.
 # USE_IMAGES = True
@@ -117,8 +117,6 @@ def serve_socketio_js():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     if request.method == 'POST':
         # Dummy logic: replace with real authentication logic
         username = request.form['username']
@@ -219,9 +217,9 @@ def site_manager():
     return render_template('site_manager.html', sites=sites_data)
 
 
-async def my_async_function():
-    await asyncio.sleep(1)
-    print("Function executed after 1 second")
+# async def my_async_function():
+#     await asyncio.sleep(1)
+#     print("Function executed after 1 second")
 
 
 def update_excel_with_live_link(file_path, row_index, live_url):
@@ -283,7 +281,7 @@ def start_emit():
             row_index += 1
             continue
 
-        asyncio.run(my_async_function())
+        # asyncio.run(my_async_function())
         anchor, linking_url, embed_code, map_embed_title, nap, topic, live_link = row[1:8]
 
         if row[7] != None and row[7] != "Failed To Post":
@@ -309,6 +307,8 @@ def start_emit():
                 print("Matched Link inside")
                 save_matched_to_excel(site_index, host_url, linking_url)
                 continue
+            if not should_continue_processing:
+                break
 
             user_password_data = get_url_data_from_db(host_url)
             site_json = "https://" + host_url + "/wp-json/wp/v2"
@@ -317,9 +317,10 @@ def start_emit():
                 user = user_password_data.get('user')
                 password = user_password_data.get('password')
 
-                for _ in range(5):
-                    asyncio.run(my_async_function())
-
+                # for _ in range(5):
+                #     asyncio.run(my_async_function())
+                if not should_continue_processing:
+                    break
                 live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                         map_embed_title, nap, USE_IMAGES)
 
@@ -329,7 +330,6 @@ def start_emit():
                         continue
                     else:
                         break
-
                 update_excel_with_live_link(file_path, row_index + 1, live_url)
 
                 data = {
@@ -344,6 +344,7 @@ def start_emit():
                 data_list.append(data)
                 socketio.emit('update', {'data': json.dumps(data_list)})
                 save_data_to_excel(data_list)
+
 
                 link_posted = True
                 break
