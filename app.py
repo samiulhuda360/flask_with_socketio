@@ -2,7 +2,7 @@ import os
 import time
 
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
-from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url)
+from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
@@ -20,7 +20,7 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.secret_key = 'sdfadfasdfasdfasdfasdf'
 
 
-
+Exact_MATCH = False
 #DataBase Operation
 def get_link_list_from_db(host_url):
     # Establish a connection to the SQLite database
@@ -237,6 +237,7 @@ def start_emit():
 
     # Set USE_IMAGES based on checkbox value
     USE_IMAGES = 'use_images' in request.form
+    Exact_MATCH = 'exact_match' in request.form
 
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], "uploaded_excel.xlsx")
     excel_file.save(file_path)
@@ -257,7 +258,7 @@ def start_emit():
 
     while row_index < total_rows and should_continue_processing:
         row = list(sheet.iter_rows(values_only=True))[row_index]
-        print(row)
+        # print(row)
 
         if row_index == 0:
             row_index += 1
@@ -283,15 +284,24 @@ def start_emit():
             site_index = (start_site_index + offset) % num_sites  # Wrap around using modulo.
             host_url = sitenames[site_index]
             link_list = get_link_list_from_db(host_url)
+            # Extract domains from link_list
+            domain_list = [extract_domain(link) for link in link_list]
 
             # Inside the success condition where you've successfully posted the link:
             last_used_site_index = site_index  # Update the last used site index.
 
-            if linking_url in link_list:
-                print(f"Matched{link_list} in host:{host_url}")
-                print("Matched Link inside")
-                save_matched_to_excel(site_index, host_url, linking_url)
-                continue
+            if Exact_MATCH:
+                if linking_url in link_list:
+                    print(linking_url)
+                    print(link_list)
+                    continue  # Skip to the next iteration
+
+            else:  # ROOT_MATCH is True
+                if extract_domain(linking_url) in domain_list:
+                    print("Matched Root Domain inside")
+                    print(extract_domain(linking_url))
+                    print(domain_list)
+                    continue  # Skip to the next iteration
             if not should_continue_processing:
                 break
 
@@ -307,26 +317,25 @@ def start_emit():
                 if not should_continue_processing:
                     break
 
-                # Testing START
-
-                live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
-                                        map_embed_title, nap, USE_IMAGES)
-
-                if live_url == "Failed To Post":
-                    failed_post_count += 1
-                    if failed_post_count < 3:
-                        continue
-                    else:
-                        break
-                update_excel_with_live_link(file_path, row_index + 1, live_url)
-
-                if live_url != "Failed To Post":
-                    # Adding to Database
-                    store_posted_url(host_url, linking_url)
-                else:
-                    print("Not Posting")
-
-                # Testing END
+                # # Testing START
+                # live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
+                #                         map_embed_title, nap, USE_IMAGES)
+                #
+                # if live_url == "Failed To Post":
+                #     failed_post_count += 1
+                #     if failed_post_count < 3:
+                #         continue
+                #     else:
+                #         break
+                # update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
+                #
+                # if live_url != "Failed To Post":
+                #     # Adding to Database
+                #     store_posted_url(host_url, linking_url) # Adding the posted link to database
+                # else:
+                #     print("Not Posting")
+                live_url = "TEST"
+                # # Testing END
 
                 data = {
                     'id': row_index,
@@ -337,7 +346,7 @@ def start_emit():
                     'live_url': live_url,
                     "Host_site": host_url,
                 }
-                time.sleep(1.5)
+                time.sleep(1)
 
                 data_list.append(data)
                 socketio.emit('update', {'data': json.dumps(data_list)})

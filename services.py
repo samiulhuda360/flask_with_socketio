@@ -10,6 +10,8 @@ import os
 from config import Pexels_API_ENDPOINT
 from random import randrange
 import random
+from urllib.parse import urlparse
+
 
 # Image Operations
 def process_image(keyword, USE_IMAGES):
@@ -268,7 +270,19 @@ def store_posted_url(sitename, url):
     else:
         print(f"Error: No site_id found for sitename {sitename}")
 
+# Matching Exact Root Domain
+def extract_domain(url):
+    try:
+        # Use urlparse to break the URL into components
+        parsed_url = urlparse(url)
 
+        # Extract the 'netloc' component for the domain
+        domain = parsed_url.netloc
+
+        return domain
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
 
 
 
