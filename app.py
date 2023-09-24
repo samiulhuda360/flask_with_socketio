@@ -317,25 +317,24 @@ def start_emit():
                 if not should_continue_processing:
                     break
 
-                # # Testing START
-                # live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
-                #                         map_embed_title, nap, USE_IMAGES)
-                #
-                # if live_url == "Failed To Post":
-                #     failed_post_count += 1
-                #     if failed_post_count < 3:
-                #         continue
-                #     else:
-                #         break
-                # update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
-                #
-                # if live_url != "Failed To Post":
-                #     # Adding to Database
-                #     store_posted_url(host_url, linking_url) # Adding the posted link to database
-                # else:
-                #     print("Not Posting")
-                live_url = "TEST"
-                # # Testing END
+                # Testing START
+                live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
+                                        map_embed_title, nap, USE_IMAGES)
+
+                if live_url == "Failed To Post":
+                    failed_post_count += 1
+                    if failed_post_count < 3:
+                        continue
+                    else:
+                        break
+                update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
+
+                if live_url != "Failed To Post":
+                    # Adding to Database
+                    store_posted_url(host_url, linking_url) # Adding the posted link to database
+                else:
+                    print("Not Posting")
+                # Testing END
 
                 data = {
                     'id': row_index,
