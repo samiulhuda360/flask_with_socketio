@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='custom-css.css') }}" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
 </head>
 
 <body class="container-fluid no-padding">
@@ -42,12 +41,14 @@
 
 <div class="container">
 
-
-    <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
+   <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
         <div class="mb-3">
             <label for="excel_file" class="form-label">Select an Excel file</label>
             <input type="file" class="form-control mb-3" name="excel_file" id="excel_file">
-            <input type="checkbox" name="use_images" id="use_images" value="True">
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="use_images" id="use_images" value="True">
+                <label class="form-check-label" for="use_images">Use Images</label>
+            </div>
             <label for="use_images">Use Images</label>
         </div>
         <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
@@ -71,177 +72,37 @@
     <div id="progressContainer" class="text-center" style="display: block;">
     <!-- The spinner and text will be inserted here by the script -->
     </div>
-    <div id="tableContainer" class="table-responsive">
-        <table id="dataTable" class="table table-info table-bordered">
-            <thead>
+<div id="fakeScroll" class="fake-scroll">
+    <div id="fakeContent"></div>
+</div>
+<div id="tableContainer" class="table-responsive">
+    <table id="dataTable" class="table table-info table-bordered">
+         <thead>
                 <tr>
                     <th>Id</th>
                     <th>Anchor</th>
                     <th>Linking URL</th>
                     <th>Topic</th>
                     <th>Live URL</th>
-                    <th>Live URL</th>
+                    <th>Root Domain</th>
                 </tr>
             </thead>
             <tbody>
                 <!-- Table rows will be added here dynamically -->
             </tbody>
-        </table>
-    </div>
+    </table>
 </div>
+</div>
+
 
 <div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">
         <!-- Confirmation messages will be shown here -->
 </div>
 
-
-<script>
-function stopProcessing() {
-    // Use AJAX to send a POST request to the /stop_processing route
-    fetch('/stop_processing', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => alert(data.message))
-        .catch(error => console.error('Error:', error));
-}
-</script>
-
-<script>
-      document.addEventListener("DOMContentLoaded", function() {
-
-    // Helper functions
-    function createElement(tag, attrs, children) {
-        const el = document.createElement(tag);
-        for (let key in attrs) {
-            el[key] = attrs[key];
-        }
-        if (children) {
-            children.forEach(child => el.appendChild(child));
-        }
-        return el;
-    }
-
-    function createAndAppendTableRows(dataJSON) {
-        const tableBody = document.querySelector('#dataTable tbody');
-        tableBody.innerHTML = ''; // Clear the existing table rows
-
-        dataJSON.forEach(dataItem => {
-            const row = createElement('tr', {}, []);
-
-            ['id', 'anchor', 'linking_url', 'topic', 'live_url', 'Host_site'].forEach(column => {
-                const cell = createElement('td', {textContent: dataItem[column]});
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
-        });
-    }
-
-    // Form submission handling
-    document.getElementById("uploadForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        // Show the spinner when processing starts
-    document.getElementById("progress").style.display = "block";
-
-        fetch('/start_emit', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            if (data.message) {
-                document.getElementById("progressText").innerText = data.message;
-            }
-        });
-    });
-    // Setup socket.io connection
-     // Socket.io setup with enhanced error handling
-    const socket = io.connect('http://' + document.domain + ':' + location.port, {
-        'reconnection': true,
-        'reconnectionDelay': 500,  // Initial delay (milliseconds)
-        'reconnectionAttempts': 5   // Max reconnection attempts
-    });
-
-    // Successful connection
-    socket.on('connect', function() {
-        console.log('Connected to the server.');
-    });
-
-    // Handling connection error
-    socket.on('connect_error', function(error) {
-        console.error('Connection error:', error);
-    });
-
-    // Handling connection timeout
-    socket.on('connect_timeout', function() {
-        console.error('Connection timeout.');
-    });
-
-    // Handling reconnection attempt
-    socket.on('reconnecting', function(attemptNumber) {
-        console.log(`Attempting to reconnect. Attempt number ${attemptNumber}`);
-    });
-
-    // Handling failed reconnection
-    socket.on('reconnect_failed', function() {
-        console.error('Failed to reconnect after multiple attempts.');
-    });
-
-    // Handling successful reconnection
-    socket.on('reconnect', function(attemptNumber) {
-        console.log(`Successfully reconnected on attempt number ${attemptNumber}.`);
-    });
-
-    socket.on('update', function(data) {
-        if (data.data) {
-            createAndAppendTableRows(JSON.parse(data.data));
-        }
-
-        if (data.message) {
-            const messageDiv = document.getElementById('confirmationMessage');
-            messageDiv.innerHTML = data.message;
-            messageDiv.style.display = "block";
-        }
-    });
-
-    // Progress Spinner and Text setup
-    const progressDiv = createElement('div', {id: 'progress', style: 'display: none'});
-    const spinner = createElement('div', {className: 'spinner-border text-primary', role: 'status'});
-    const span = createElement('span', {className: 'sr-only', innerText: 'Processing...'});
-    const progressText = createElement('p', {id: 'progressText', innerText: 'Processing...'});
-
-    spinner.appendChild(span);
-    progressDiv.appendChild(spinner);
-    progressDiv.appendChild(progressText);
-    document.getElementById("progressContainer").appendChild(progressDiv);
-
-socket.on('update', function(data) {
-    if (data.data) {
-        createAndAppendTableRows(JSON.parse(data.data));
-    }
-
-    if (data.message) {
-        const messageDiv = document.getElementById('confirmationMessage');
-        messageDiv.innerHTML = data.message;
-        messageDiv.style.display = "block";
-
-        // Check for the specific stop message
-        if (data.message === "Process stopped" || data.message === "Processing complete.") {
-            // Hide the spinner
-            document.getElementById("progress").style.display = "none";
-        }
-    }
-});
-
-
-
-});
-
- </script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
 <!-- Bootstrap JS, Popper.js -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
-</div>
+
 </body>
 </html>

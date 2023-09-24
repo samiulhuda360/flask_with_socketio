@@ -1,16 +1,16 @@
-# import asyncio
-from flask import Flask, render_template, request, jsonify, send_file, session
-from services import (process_site, save_data_to_excel, get_all_sitenames, get_url_data_from_db, save_matched_to_excel)
+import os
+import time
+
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
+from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
 import openpyxl
 import sqlite3
-import os
 from utils import get_api_keys, openaii
 
 app = Flask(__name__)
-# socketio = SocketIO(app, async_mode='threading')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -19,9 +19,9 @@ app.config['SESSION_COOKIE_SECURE'] = False
 
 app.secret_key = 'sdfadfasdfasdfasdfasdf'
 
-# Set this to True if you want to use images, and False if not.
-# USE_IMAGES = True
 
+
+#DataBase Operation
 def get_link_list_from_db(host_url):
     # Establish a connection to the SQLite database
     conn = sqlite3.connect('sites_data.db')
@@ -39,10 +39,6 @@ def get_link_list_from_db(host_url):
     conn.close()
 
     return links
-
-
-from flask import redirect, url_for, flash
-
 
 @app.route('/save_api_config', methods=['POST'])
 def save_api_config():
@@ -73,7 +69,6 @@ def save_api_config():
 
     flash("API configuration updated successfully!", "success")
     return redirect(url_for('config_manager'))
-
 
 
 @app.route('/download_excel')
@@ -109,10 +104,6 @@ def uploaded_download_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route('/socket_io.js')
-def serve_socketio_js():
-    return app.send_static_file('socket_io.js')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -201,7 +192,6 @@ def site_manager():
     sites = cursor.fetchall()
 
     sites_data = []
-    print(len(sites))
     for site in sites:
         site_id, sitename, username, app_password = site
         cursor.execute('SELECT url FROM links WHERE site_id = ?', (site_id,))
@@ -216,10 +206,6 @@ def site_manager():
 
     return render_template('site_manager.html', sites=sites_data)
 
-
-# async def my_async_function():
-#     await asyncio.sleep(1)
-#     print("Function executed after 1 second")
 
 
 def update_excel_with_live_link(file_path, row_index, live_url):
@@ -242,7 +228,6 @@ def stop_processing():
 def start_emit():
     global should_continue_processing
     global USE_IMAGES
-    print(openaii)
     should_continue_processing = True
 
     # Get the Excel file
@@ -321,6 +306,9 @@ def start_emit():
                 #     asyncio.run(my_async_function())
                 if not should_continue_processing:
                     break
+
+                # Testing START
+
                 live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                         map_embed_title, nap, USE_IMAGES)
 
@@ -332,6 +320,14 @@ def start_emit():
                         break
                 update_excel_with_live_link(file_path, row_index + 1, live_url)
 
+                if live_url != "Failed To Post":
+                    # Adding to Database
+                    store_posted_url(host_url, linking_url)
+                else:
+                    print("Not Posting")
+
+                # Testing END
+
                 data = {
                     'id': row_index,
                     'anchor': anchor,
@@ -341,9 +337,10 @@ def start_emit():
                     'live_url': live_url,
                     "Host_site": host_url,
                 }
+                time.sleep(1.5)
+
                 data_list.append(data)
                 socketio.emit('update', {'data': json.dumps(data_list)})
-                save_data_to_excel(data_list)
 
 
                 link_posted = True

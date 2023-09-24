@@ -2,4 +2,23 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
+ .fake-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 40px;
+  }
+ #fakeContent {
+    height: 1px;
+    height: 1px;
+  }
 
+.table th, .table td {
+  min-width: 50px;
+  max-width: 100px;
+  overflow: hidden;  /* or auto if you want to make it scrollable */
+  text-overflow: ellipsis;
+}
+
+.table {
+  table-layout: fixed;
+}

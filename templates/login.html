@@ -11,15 +11,25 @@
 
 <body class="bg-light">
 
+
+
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
+                <!-- Display Flash Messages -->
+                    {% with messages = get_flashed_messages() %}
+                      {% if messages %}
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
                         <h5>Login</h5>
                     </div>
                     <div class="card-body">
-                        <form action="/login" method="post"> <!-- replace '/your-login-route' with your backend login endpoint -->
+                        <form action="/login" method="post">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
                                 <input type="text" class="form-control" id="username" name="username" required>

@@ -9,8 +9,9 @@ import re
 import os
 from config import Pexels_API_ENDPOINT
 from random import randrange
+import random
 
-
+# Image Operations
 def process_image(keyword, USE_IMAGES):
     if not USE_IMAGES:
         return None
@@ -94,6 +95,7 @@ def construct_image_wp(image_data, query):
     return image_wp, post_id
 
 
+# Wordpress Posting
 def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_embed_title, nap, USE_IMAGES):
 
     image_wp, post_id = construct_image_wp(image_data, anchor) if USE_IMAGES else ("", None)
@@ -186,7 +188,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
     post_data = {
         'title': formatted_title,
         'slug': title,
-        'status': 'draft',
+        'status': 'publish',
         'categories': 1,
         'content': content,
     }
@@ -195,7 +197,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
         post_data = {
             'title': formatted_title,
             'slug': title,
-            'status': 'draft',
+            'status': 'publish',
             'content': content,
             'categories': 1,
             'featured_media': post_id
@@ -219,60 +221,8 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
 
     return live_link
 
-def get_site_id_from_sitename(sitename):
-    conn = sqlite3.connect("sites_data.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT site_id FROM sites WHERE sitename=?", (sitename,))
-    site_id = cursor.fetchone()
-    conn.close()
-    return site_id[0] if site_id else None
+# Database Operation
 
-def store_posted_url(sitename, url):
-    site_id = get_site_id_from_sitename(sitename)
-    if site_id:
-        conn = sqlite3.connect("sites_data.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO links (site_id, url) VALUES (?, ?)", (site_id, url))
-        conn.commit()
-        conn.close()
-    else:
-        print(f"Error: No site_id found for sitename {sitename}")
-
-
-def save_matched_to_excel(site_index, sitename, linking_url):
-    file_name = 'matched_data.xlsx'
-
-    # Create a new Excel workbook
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    headers = ['Site Index', 'Sitename', 'Matched Linking URL']
-    ws.append(headers)
-
-    # Append the matched data
-    row_data = [site_index, sitename, linking_url]
-    ws.append(row_data)
-
-    # Save the Excel file
-    wb.save(file_name)
-
-
-def save_data_to_excel(data_list):
-    # Create a new Excel workbook
-    wb = openpyxl.Workbook()
-    ws = wb.active
-
-    # Add headers to the Excel file
-    headers = ['Id', 'Anchor', 'Linking URL', 'nap','Topic', 'Live URL Status', 'Host URL']
-    ws.append(headers)
-
-    # Add data rows to the Excel file
-    for data in data_list:
-        row_data = [data['id'], data['anchor'], data['linking_url'], data['nap'], data['topic'], data['live_url'], data['Host_site']]
-        ws.append(row_data)
-
-    # Save the Excel file
-    excel_file_path = 'data.xlsx'  # You can specify the desired file path
-    wb.save(excel_file_path)
 
 def get_url_data_from_db(t_url):
     con = sqlite3.connect("sites_data.db")
@@ -295,8 +245,69 @@ def get_all_sitenames():
 
     conn.close()
 
+    random.shuffle(sitenames)
 
     return sitenames
+
+def get_site_id_from_sitename(sitename):
+    conn = sqlite3.connect("sites_data.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT site_id FROM sites WHERE sitename=?", (sitename,))
+    site_id = cursor.fetchone()
+    conn.close()
+    return site_id[0] if site_id else None
+
+def store_posted_url(sitename, url):
+    site_id = get_site_id_from_sitename(sitename)
+    if site_id:
+        conn = sqlite3.connect("sites_data.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO links (site_id, url) VALUES (?, ?)", (site_id, url))
+        conn.commit()
+        conn.close()
+    else:
+        print(f"Error: No site_id found for sitename {sitename}")
+
+
+
+
+
+# Excel Operation
+def save_matched_to_excel(site_index, sitename, linking_url):
+    file_name = 'matched_data.xlsx'
+
+    # Create a new Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    headers = ['Site Index', 'Sitename', 'Matched Linking URL']
+    ws.append(headers)
+
+    # Append the matched data
+    row_data = [site_index, sitename, linking_url]
+    ws.append(row_data)
+
+    # Save the Excel file
+    wb.save(file_name)
+
+
+# def save_data_to_excel(data_list):
+#     # Create a new Excel workbook
+#     wb = openpyxl.Workbook()
+#     ws = wb.active
+#
+#     # Add headers to the Excel file
+#     headers = ['Id', 'Anchor', 'Linking URL', 'nap','Topic', 'Live URL Status', 'Host URL']
+#     ws.append(headers)
+#
+#     # Add data rows to the Excel file
+#     for data in data_list:
+#         row_data = [data['id'], data['anchor'], data['linking_url'], data['nap'], data['topic'], data['live_url'], data['Host_site']]
+#         ws.append(row_data)
+#
+#     # Save the Excel file
+#     excel_file_path = 'data.xlsx'  # You can specify the desired file path
+#     wb.save(excel_file_path)
+
 
 def process_site(site_json, host_site, user, password, topic, anchor, client_link, embed_code, map_embed_title, nap, USE_IMAGES):
     credentials = user + ':' + password
@@ -314,12 +325,6 @@ def process_site(site_json, host_site, user, password, topic, anchor, client_lin
         post_id = ""
     final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES)
     post_url = post_article(site_json, headers, topic, final_content, post_id, USE_IMAGES)
-
-    if post_url != "Failed To Post":
-        #Adding to Database
-        store_posted_url(host_site, client_link)
-    else:
-        print("Not Posting")
 
     return post_url
 
