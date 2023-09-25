@@ -118,7 +118,7 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     # Define the HTML tags and content
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
-    paragraph_template = f"<p></p> Must add the provided HTML tag inside any of the paragraphs: {link_tag}. Do not change it: {link_tag}"
+    paragraph_template = f"<p></p> Must add the provided HTML tag without changing anything, inside any of the paragraphs: {link_tag}. Do not change it: {link_tag}"
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(
