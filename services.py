@@ -74,26 +74,36 @@ def upload_image_data(target_url, headers, image_path):
         # handle the case where no image is provided, perhaps return a default value or error
         return None
     with open(image_path, 'rb') as img_file:
-        media = {'file': img_file}
-        response = requests.post(target_url + '/media', headers=headers, files=media)
-        img_file.close()
-        delete_all_images_in_folder()
-        return json.loads(response.content)
+        try:
+            media = {'file': img_file}
+            response = requests.post(target_url + '/media', headers=headers, files=media)
+            img_file.close()
+            delete_all_images_in_folder()
+            return json.loads(response.content)
+        except:
+            print("image posting error")
+            return None
 
 
 def construct_image_wp(image_data, query):
-    if image_data is None:
-        # Handle the error, maybe return default values or raise a more descriptive error
-        return None, None
-    image_title = query.replace('-', ' ').split('.')[0]
-    post_id = str(image_data['id'])
-    source = image_data['guid']['rendered']
 
-    image1 = '<!-- wp:image {"align":"center","id":' + post_id + ',"sizeSlug":"full","linkDestination":"none"} -->'
-    image2 = '<div class="wp-block-image"><figure class="aligncenter size-full"><img src="' + source + '" alt="' + image_title + '" title="' + image_title + '" class="wp-image-' + post_id + '"/></figure></div>'
-    image3 = '<!-- /wp:image -->'
+    if image_data != None:
+        try:
+            image_title = query.replace('-', ' ').split('.')[0]
+            post_id = str(image_data['id'])
+            source = image_data['guid']['rendered']
 
-    image_wp = image1 + image2 + image3
+            image1 = '<!-- wp:image {"align":"center","id":' + post_id + ',"sizeSlug":"full","linkDestination":"none"} -->'
+            image2 = '<div class="wp-block-image"><figure class="aligncenter size-full"><img src="' + source + '" alt="' + image_title + '" title="' + image_title + '" class="wp-image-' + post_id + '"/></figure></div>'
+            image3 = '<!-- /wp:image -->'
+            image_wp = image1 + image2 + image3
+        except:
+            image_wp = ""
+            post_id = ""
+    else:
+        image_wp = ""
+        post_id = ""
+
     return image_wp, post_id
 
 
@@ -105,14 +115,19 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     intro_body = openAI_output(
         f"Create an introduction for the article on {topic}. Give use <p></p> in each para. Not exceed 2 paragraph")
 
-    second_body = openAI_output(
-        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The heading should have <h2></h2> tags and the paragraph should have <p></p> tags."
-        f" Must provide a rel=dofollow' html link in HTML format inside any of the paragraphs. Exact Anchor: {anchor}, link: {linking_url}. Example:<a href=link rel='dofollow'>Exact Anchor</a>")
+    # Define the HTML tags and content
+    h2_heading = "<h2></h2>"
+    link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
+    paragraph_template = f"<p></p> Must add the provided HTML tag inside any of the paragraphs: {link_tag}. Do not change it: {link_tag}"
 
+    # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
+    second_body = openAI_output(
+        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The heading should have {h2_heading} tags and the paragraph should have {paragraph_template} tags."
+    )
+    print(link_tag)
 
     second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")
 
-    print(second_body_formated)
 
     def replace_link(match):
         original_tag = match.group(0)
@@ -132,7 +147,6 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     second_body_formated_final = re.sub(r"<a href=[\"']([^\"']+)[\"'][^>]+rel=[\"']dofollow[\"']>[^<]+<\/a>",
                                         replace_link, second_body_formated)
 
-    print(second_body_formated_final)
 
 
 
@@ -208,7 +222,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
     try:
         print("Start Posting")
         response = requests.post(target_url + '/posts', headers=headers, json=post_data)
-        print("Response:", response)
+        # print("Response:", response)
         # Decode the bytes content to a string
         response_content_str = response.content.decode('utf-8')
         # Parse the JSON data
@@ -303,24 +317,6 @@ def save_matched_to_excel(site_index, sitename, linking_url):
     # Save the Excel file
     wb.save(file_name)
 
-
-# def save_data_to_excel(data_list):
-#     # Create a new Excel workbook
-#     wb = openpyxl.Workbook()
-#     ws = wb.active
-#
-#     # Add headers to the Excel file
-#     headers = ['Id', 'Anchor', 'Linking URL', 'nap','Topic', 'Live URL Status', 'Host URL']
-#     ws.append(headers)
-#
-#     # Add data rows to the Excel file
-#     for data in data_list:
-#         row_data = [data['id'], data['anchor'], data['linking_url'], data['nap'], data['topic'], data['live_url'], data['Host_site']]
-#         ws.append(row_data)
-#
-#     # Save the Excel file
-#     excel_file_path = 'data.xlsx'  # You can specify the desired file path
-#     wb.save(excel_file_path)
 
 
 def process_site(site_json, host_site, user, password, topic, anchor, client_link, embed_code, map_embed_title, nap, USE_IMAGES):

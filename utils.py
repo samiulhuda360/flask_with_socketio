@@ -51,7 +51,7 @@ def retry_if_exception(exception):
     """Return True if we should retry (in this case when there's an Exception), False otherwise"""
     return isinstance(exception, Exception)
 
-@retry(retry_on_exception=retry_if_exception, stop_max_attempt_number=5)
+@retry(retry_on_exception=retry_if_exception, stop_max_attempt_number=7)
 def openAI_output(self):
     # pass
     try:
