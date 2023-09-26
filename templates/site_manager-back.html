@@ -73,58 +73,34 @@
 
 <div class="container mt-4">
     <h2>Sites Data</h2>
-    <div class="row">
-        <!-- Left Form -->
-        <div class="col-md-6">
-            <form method="get" action="/site-manager">
-                <select name="sitename_filter">
-                    <option value="all">View All</option>
-                    {% for name in all_sitenames %}
-                    <option value="{{ name }}" {% if name == request.args.get('sitename_filter') %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                <input type="submit" value="Filter">
-            </form>
-        </div>
-
-        <!-- Right Form -->
-        <div class="col-md-6">
-        <form action="/upload-excel" method="POST" enctype="multipart/form-data">
-            <input type="file" name="excel_data">
-            <input type="submit" value="Upload">
-        </form>
-        </div>
-</div>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Website Name</th>
-            <th>Username</th>
-            <th>App Password</th>
-            <th>Link List</th>
-
-        </tr>
-    </thead>
-    <tbody>
-        {% for site in filtered_sites %}
-        <tr>
-            <td>{{ site.site_id }}</td>
-            <td>{{ site.sitename }}</td>
-            <td>{{ site.username }}</td>
-            <td>{{ site.app_password }}</td>
-            <td>
-              <ul>
-                  {% for link in site.links %}
-                  <li>{{ link }}</li>
-                  {% endfor %}
-              </ul>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Website Name</th>
+                <th>Username</th>
+                <th>App Password</th>
+                <th>Link List</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for site in sites %}
+                <tr>
+                    <td>{{ site.site_id }}</td>
+                    <td>{{ site.sitename }}</td>
+                    <td>{{ site.username }}</td>
+                    <td>{{ site.app_password }}</td>
+<!--                    <td>-->
+<!--                        <ul>-->
+<!--                            {% for link in site.links %}-->
+<!--                                <li>{{ link }}</li>-->
+<!--                            {% endfor %}-->
+<!--                        </ul>-->
+<!--                    </td>-->
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <!--<script>-->

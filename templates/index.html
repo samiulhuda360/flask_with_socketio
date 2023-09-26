@@ -41,27 +41,46 @@
 
 <div class="container">
 
-   <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
-        <div class="mb-3">
-            <label for="excel_file" class="form-label">Select an Excel file</label>
-            <input type="file" class="form-control mb-3" name="excel_file" id="excel_file">
+<form id="uploadForm" enctype="multipart/form-data" class="mb-4">
+    <div class="mb-3">
+        <label for="excel_file" class="form-label">Select an Excel file</label>
+        <input type="file" class="form-control mb-3" name="excel_file" id="excel_file">
+    </div>
+
+    <div class="row">
+        <!-- Left Column for checkboxes -->
+        <div class="col-md-6">
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" name="use_images" id="use_images" value="True">
                 <label class="form-check-label" for="use_images">Use Images</label>
             </div>
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" name="exact_match" id="exact_match" value="True">
-                <label class="form-check-label" for="use_images">Avoid Exact Match Only</label>
+                <label class="form-check-label" for="exact_match">Avoid Exact Match Only</label>
             </div>
         </div>
-        <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
-    </form>
+
+        <!-- Right Column for the new checkboxes -->
+        <div class="col-md-6">
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="skip_au" id="skip_au" value="True">
+                <label class="form-check-label" for="skip_au">Skip .com.au and .org.au</label>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="only_au" id="only_au" value="True">
+                <label class="form-check-label" for="only_au">Only .com.au and .org.au</label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
+</form>
 
 <div class="row">
     <!-- Group the first three buttons on the left -->
     <div class="col-md-9">
         <a href="/uploaded_excel" download="matched_data.xlsx" class="btn btn-info mb-4">Download Link Report</a>
-        <a href="/matched_excel" download="matched_data.xlsx" class="btn btn-info mb-4">Download Matched Report</a>
+        <a href="/failed_csv" download="failed_urls.csv" class="btn btn-info mb-4">Download Failed To Post</a>
     </div>
 
     <!-- Align the last button to the right -->
@@ -95,12 +114,11 @@
             </tbody>
     </table>
 </div>
-</div>
-
-
 <div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">
         <!-- Confirmation messages will be shown here -->
 </div>
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='main.js') }}"></script>

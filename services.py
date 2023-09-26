@@ -107,7 +107,7 @@ def construct_image_wp(image_data, query):
     return image_wp, post_id
 
 
-# Wordpress Posting
+# WordPress Posting
 def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_embed_title, nap, USE_IMAGES):
 
     image_wp, post_id = construct_image_wp(image_data, anchor) if USE_IMAGES else ("", None)
@@ -118,15 +118,18 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     # Define the HTML tags and content
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
-    paragraph_template = f"<p></p> Must add the provided HTML tag without changing anything, inside any of the paragraphs: {link_tag}. Do not change it: {link_tag}"
+    paragraph_template = f"<p></p> Must add the provided HTML tag without changing anything, inside any of the " \
+                         f"paragraphs: {link_tag}. Do not change anchor tag or the link of {link_tag}"
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(
         f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The heading should have {h2_heading} tags and the paragraph should have {paragraph_template} tags."
     )
-    print(link_tag)
+    try:
+        second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")
+    except:
+        second_body_formated = second_body
 
-    second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")
 
 
     def replace_link(match):
@@ -155,10 +158,7 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
             f"Write the final part with one paragraphs on the topic {topic}. The previous part is {first_part}. Don't "
             f"put any links.")
 
-    print("image_wp:", image_wp)
-    print("map_embed_title:", map_embed_title)
-    print("embed_code:", embed_code)
-    print("nape:", nap)
+    print("Middle of Creating Content")
 
 
     if embed_code != None:
@@ -189,9 +189,12 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
                           f"excess 50-55 characters")
 
     def custom_title(s):
-        s = s.replace("“", "").replace("”", "").replace("\"", "")
-        s = s.title()
-        s = s.replace("’S", "’s")
+        try:
+            s = s.replace("“", "").replace("”", "").replace("\"", "")
+            s = s.title()
+            s = s.replace("’S", "’s")
+        except:
+            s = s
         return s
 
 
@@ -199,12 +202,10 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
 
     print("title:", formatted_title)
 
-    print(content)
-
     post_data = {
         'title': formatted_title,
         'slug': title,
-        'status': 'publish',
+        'status': "publish",
         'categories': 1,
         'content': content,
     }
@@ -213,7 +214,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
         post_data = {
             'title': formatted_title,
             'slug': title,
-            'status': 'publish',
+            'status': "publish",
             'content': content,
             'categories': 1,
             'featured_media': post_id
@@ -222,14 +223,14 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
     try:
         print("Start Posting")
         response = requests.post(target_url + '/posts', headers=headers, json=post_data)
-        # print("Response:", response)
+        print(response.status_code)
         # Decode the bytes content to a string
         response_content_str = response.content.decode('utf-8')
         # Parse the JSON data
         datas = json.loads(response_content_str)
-        print(datas)
         slug_url = datas["link"]
         live_link = slug_url
+        print(live_link)
     except:
         slug_url = "Failed To Post"
         live_link = slug_url
@@ -333,7 +334,11 @@ def process_site(site_json, host_site, user, password, topic, anchor, client_lin
     else:
         image_data = None  # or some default value
         post_id = ""
-    final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES)
+    try:
+        final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES)
+    except:
+        final_content = ""
+    print("before post url")
     post_url = post_article(site_json, headers, topic, final_content, post_id, USE_IMAGES)
 
     return post_url

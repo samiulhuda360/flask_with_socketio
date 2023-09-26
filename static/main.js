@@ -65,9 +65,13 @@ document.addEventListener("DOMContentLoaded", function() {
             const messageDiv = document.getElementById('confirmationMessage');
             messageDiv.innerHTML = data.message;
             messageDiv.style.display = "block";
-            if (data.message === "Process stopped" || data.message === "Processing complete.") {
+       if (data.message === "Process stopped" || data.message === "Processing complete.") {
                 document.getElementById("progress").style.display = "none";
             }
+       // Handle errors from the 'start_emit' function here
+         if (data.error) {
+        alert('Error: ' + data.error);
+    }
         }
     });
 

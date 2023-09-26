@@ -1,14 +1,15 @@
 import os
 import time
-
-from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
+import csv
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for
 from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
 import openpyxl
+from utils import get_api_keys
+import pandas as pd
 import sqlite3
-from utils import get_api_keys, openaii
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
@@ -21,6 +22,8 @@ app.secret_key = 'sdfadfasdfasdfasdfasdf'
 
 
 Exact_MATCH = False
+SKIP_COM_AU = False
+ONLY_COM_AU = False
 #DataBase Operation
 def get_link_list_from_db(host_url):
     # Establish a connection to the SQLite database
@@ -82,14 +85,14 @@ def download_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/matched_excel')
+@app.route('/failed_csv')
 def matched_download_excel():
     # Specify the file path where the Excel file is saved
-    matched_excel_file_path = 'matched_data.xlsx'  # Adjust the path as needed
+    failed_csv_file_path = 'failed_urls.csv'  # Adjust the path as needed
 
     # Send the file as a response with appropriate headers
     try:
-        return send_file(matched_excel_file_path, as_attachment=True)
+        return send_file(failed_csv_file_path, as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -182,29 +185,89 @@ def config_manager():
     return render_template('configuration.html', openai_api=api_keys["openai_api"], pexels_api=api_keys["pexels_api"])
 
 
-
-@app.route('/site-manager')
+@app.route('/site-manager', methods=['GET'])
 @login_required
 def site_manager():
+    sitename_filter = request.args.get('sitename_filter', None)  # Notice the default value is now None
+
     conn = sqlite3.connect('sites_data.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM sites')
-    sites = cursor.fetchall()
 
     sites_data = []
-    for site in sites:
-        site_id, sitename, username, app_password = site
-        cursor.execute('SELECT url FROM links WHERE site_id = ?', (site_id,))
-        links = cursor.fetchall()
-        sites_data.append({
-            'site_id': site_id,
-            'sitename': sitename,
-            'username': username,
-            'app_password': app_password,
-            'links': [link[0] for link in links]
-        })
 
-    return render_template('site_manager.html', sites=sites_data)
+    if sitename_filter:
+        if sitename_filter == 'all':
+            cursor.execute('SELECT * FROM sites')
+        else:
+            cursor.execute('SELECT * FROM sites WHERE sitename = ?', (sitename_filter,))
+
+        sites = cursor.fetchall()
+
+        for site in sites:
+            site_id, sitename, username, app_password = site
+            cursor.execute('SELECT url FROM links WHERE site_id = ?', (site_id,))
+            links = cursor.fetchall()
+            sites_data.append({
+                'site_id': site_id,
+                'sitename': sitename,
+                'username': username,
+                'app_password': app_password,
+                'links': [link[0] for link in links]
+            })
+
+    # Fetching all site names for the dropdown
+    cursor.execute('SELECT DISTINCT sitename FROM sites')
+    all_sitenames = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return render_template('site_manager.html', filtered_sites=sites_data, all_sitenames=all_sitenames)
+
+
+
+
+
+@app.route('/upload-excel', methods=['POST'])
+@login_required
+def upload_excel_site_data():
+    if 'excel_data' not in request.files:
+        return "No file part", 400
+
+    file = request.files['excel_data']
+
+    if file.filename == '':
+        return "No selected file", 400
+
+    if not (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+        return "Invalid file type. Please upload an Excel file.", 400
+
+    df = pd.read_excel(file, engine='openpyxl')
+
+    conn = sqlite3.connect('sites_data.db')
+    cursor = conn.cursor()
+
+    for _, row in df.iterrows():
+        sitename, username, app_password, link = row['sitename'], row['username'], row['app_password'], row['links']
+
+        cursor.execute('SELECT site_id FROM sites WHERE sitename=?', (sitename,))
+        site_id = cursor.fetchone()
+
+        if site_id:  # if site exists
+            cursor.execute('UPDATE sites SET username=?, app_password=? WHERE site_id=?',
+                           (username, app_password, site_id[0]))
+        else:  # if site doesn't exist
+            cursor.execute('INSERT INTO sites (sitename, username, app_password) VALUES (?, ?, ?)',
+                           (sitename, username, app_password))
+            site_id = (cursor.lastrowid,)
+
+        # Insert link if it doesn't exist for the site
+        cursor.execute('SELECT url FROM links WHERE site_id=? AND url=?', (site_id[0], link))
+        if not cursor.fetchone():
+            cursor.execute('INSERT INTO links (site_id, url) VALUES (?, ?)', (site_id[0], link))
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('site_manager'))
 
 
 
@@ -226,6 +289,7 @@ def stop_processing():
 
 @app.route('/start_emit', methods=['POST'])
 def start_emit():
+    time.sleep(8)
     global should_continue_processing
     global USE_IMAGES
     should_continue_processing = True
@@ -238,6 +302,8 @@ def start_emit():
     # Set USE_IMAGES based on checkbox value
     USE_IMAGES = 'use_images' in request.form
     Exact_MATCH = 'exact_match' in request.form
+    SKIP_COM_AU = 'skip_au' in request.form
+    ONLY_COM_AU = 'only_au' in request.form
 
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], "uploaded_excel.xlsx")
     excel_file.save(file_path)
@@ -255,122 +321,149 @@ def start_emit():
     row_index = 0
 
     last_used_site_index = -1  # Start with -1 so that for the first row, it starts with 0.
+    with open('failed_urls.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["Failed URLs"])
+    try:
+        while row_index < total_rows and should_continue_processing:
+            row = list(sheet.iter_rows(values_only=True))[row_index]
 
-    while row_index < total_rows and should_continue_processing:
-        row = list(sheet.iter_rows(values_only=True))[row_index]
-        # print(row)
+            if row_index == 0:
+                row_index += 1
+                continue
+            if row[1] is None or row[2] is None:
+                row_index += 1
+                continue
 
-        if row_index == 0:
-            row_index += 1
-            continue
-        if row[1] is None or row[2] is None:
-            row_index += 1
-            continue
-
-        # asyncio.run(my_async_function())
-        anchor, linking_url, embed_code, map_embed_title, nap, topic, live_link = row[1:8]
-
-        if row[7] != None and row[7] != "Failed To Post":
-            print("skipping the site")
-            row_index += 1
-            continue
+                # asyncio.run(my_async_function())
+            anchor, linking_url, embed_code, map_embed_title, nap, topic, live_link = row[1:8]
 
 
-        link_posted = False
-        failed_post_count = 0  # Counter for failed posts.
-        start_site_index = (last_used_site_index + 1) % num_sites  # Start from the next site.
+            if row[7] != None and row[7] != "Failed To Post":
+                print("skipping the row")
+                row_index += 1
+                continue
 
-        for offset in range(num_sites):
-            site_index = (start_site_index + offset) % num_sites  # Wrap around using modulo.
-            host_url = sitenames[site_index]
-            link_list = get_link_list_from_db(host_url)
-            # Extract domains from link_list
-            domain_list = [extract_domain(link) for link in link_list]
 
-            # Inside the success condition where you've successfully posted the link:
-            last_used_site_index = site_index  # Update the last used site index.
+            link_posted = False
+            failed_post_count = 0  # Counter for failed posts.
+            start_site_index = (last_used_site_index + 1) % num_sites  # Start from the next site.
 
-            if Exact_MATCH:
-                if linking_url in link_list:
-                    print(linking_url)
-                    print(link_list)
-                    continue  # Skip to the next iteration
+            for offset in range(num_sites):
+                site_index = (start_site_index + offset) % num_sites  # Wrap around using modulo.
+                host_url = sitenames[site_index].strip()
+                print("Posting to:", host_url)
+                link_list = get_link_list_from_db(host_url)
+                # Extract domains from link_list
+                domain_list = [extract_domain(link) for link in link_list]
 
-            else:  # ROOT_MATCH is True
-                if extract_domain(linking_url) in domain_list:
+                # Inside the success condition where you've successfully posted the link:
+                last_used_site_index = site_index  # Update the last used site index.
+
+                # Exact Match Check
+                if Exact_MATCH:
+                    if linking_url in link_list:
+                        print(linking_url)
+                        continue  # Skip to the next iteration
+
+                # If Exact_MATCH is False, then it's Root Match
+                elif extract_domain(linking_url) in domain_list:
                     print("Matched Root Domain inside")
-                    print(extract_domain(linking_url))
-                    print(domain_list)
                     continue  # Skip to the next iteration
-            if not should_continue_processing:
-                break
+                # Skip com.au and org.au Check
+                if SKIP_COM_AU:
+                    print("Checking URL:", host_url)
+                    if host_url.endswith('com.au') or host_url.endswith('org.au'):
+                        print("Skipping because it ends with com.au or org.au")
+                        continue  # Skip to the next iteration
 
-            user_password_data = get_url_data_from_db(host_url)
-            site_json = "https://" + host_url + "/wp-json/wp/v2"
+                # Only com.au and org.au Check
+                if ONLY_COM_AU:
+                    if not (host_url.endswith('com.au') or host_url.endswith('org.au')):
+                        print("Skipping because it doesn't end with com.au or org.au")
+                        continue  # Skip to the next iteration
 
-            if user_password_data:
-                user = user_password_data.get('user')
-                password = user_password_data.get('password')
 
-                # for _ in range(5):
-                #     asyncio.run(my_async_function())
+
                 if not should_continue_processing:
                     break
 
-                # Testing START
-                live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
-                                        map_embed_title, nap, USE_IMAGES)
 
-                if live_url == "Failed To Post":
-                    failed_post_count += 1
-                    if failed_post_count < 3:
-                        continue
-                    else:
+                user_password_data = get_url_data_from_db(host_url)
+                site_json = "https://" + host_url + "/wp-json/wp/v2"
+
+                if user_password_data:
+                    user = user_password_data.get('user')
+                    password = user_password_data.get('password')
+
+                    # for _ in range(5):
+                    #     asyncio.run(my_async_function())
+                    if not should_continue_processing:
                         break
-                update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
 
-                if live_url != "Failed To Post":
-                    # Adding to Database
-                    store_posted_url(host_url, linking_url) # Adding the posted link to database
-                else:
-                    print("Not Posting")
-                # Testing END
+                    # Testing START
+                    live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
+                                            map_embed_title, nap, USE_IMAGES)
 
-                data = {
-                    'id': row_index,
-                    'anchor': anchor,
-                    'linking_url': linking_url,
-                    'nap': nap,
-                    'topic': topic,
-                    'live_url': live_url,
-                    "Host_site": host_url,
-                }
-                time.sleep(1)
+                    if live_url == "Failed To Post":
+                        with open('failed_urls.csv', 'a', newline='') as f:
+                            writer = csv.writer(f)
+                            writer.writerow([host_url])
+                            print("Failed at:", host_url)
+                        failed_post_count += 1
+                        if failed_post_count < 5:
+                            continue
+                        else:
+                            break
+                    update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
 
-                data_list.append(data)
-                socketio.emit('update', {'data': json.dumps(data_list)})
+                    if live_url != "Failed To Post":
+                        # Adding to Database
+                        store_posted_url(host_url, linking_url) # Adding the posted link to database
+                    else:
+                        print("Not Posting")
+                    # Testing END
+
+                    data = {
+                        'id': row_index,
+                        'anchor': anchor,
+                        'linking_url': linking_url,
+                        'nap': nap,
+                        'topic': topic,
+                        'live_url': live_url,
+                        "Host_site": host_url,
+                    }
+                    time.sleep(1)
+
+                    data_list.append(data)
+                    socketio.emit('update', {'data': json.dumps(data_list)})
 
 
-                link_posted = True
-                break
+                    link_posted = True
+                    break
 
-        if not link_posted:
-            print("All Sites have this link")
-            pass
+            if not link_posted:
+                print("All Sites have this link")
+                pass
 
-        row_index += 1
+            row_index += 1
 
-    if not should_continue_processing:
-        print("Process stopped")
-        flash("Process stopped")
-        socketio.emit('update', {"message": "Process stopped"})
-        return jsonify({"message": "Processing was halted by the user."}), 200
+        if not should_continue_processing:
+            print("Process stopped")
+            flash("Process stopped")
+            socketio.emit('update', {"message": "Process stopped"})
+            return jsonify({"message": "Processing was halted by the user."}), 200
+    except Exception as e:
+        # Log the error for debugging purposes
+        print(f"An error occurred: {str(e)}")
+        # Send an error message to the frontend
+        socketio.emit('error', {'message': str(e)})
 
     flash("Processed successfully!")
-    socketio.emit('update', {"message": "Processing complete."})
+    socketio.emit('update', {"message": "Processing Ended"})
     return jsonify({"message": "Processing complete."}), 200
-
 
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
+

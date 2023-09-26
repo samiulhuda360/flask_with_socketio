@@ -53,7 +53,6 @@ def retry_if_exception(exception):
 
 @retry(retry_on_exception=retry_if_exception, stop_max_attempt_number=7)
 def openAI_output(self):
-    # pass
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",

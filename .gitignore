@@ -83,10 +83,14 @@ profile_default/
 ipython_config.py
 api_config.db
 sites_data.db
-
-
+temp_folder/
+temp_folder
 # pyenv
-#   For a library or package, you might want to ignore these files since the code is
+#   For a library or package, you
+
+
+
+
 #   intended to run in multiple environments; otherwise, check them in:
 # .python-version
 
