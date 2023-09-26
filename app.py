@@ -289,7 +289,6 @@ def stop_processing():
 
 @app.route('/start_emit', methods=['POST'])
 def start_emit():
-    time.sleep(8)
     global should_continue_processing
     global USE_IMAGES
     should_continue_processing = True
