@@ -22,3 +22,13 @@
 .table {
   table-layout: fixed;
 }
+select.form-control {
+    appearance: auto;     /* For modern browsers */
+    -webkit-appearance: menulist;  /* For older Webkit browsers */
+    -moz-appearance: menulist;     /* For Firefox */
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ced4da;
+    color: #495057;
+    padding-right: 1rem;  /* Adjust as needed */
+}

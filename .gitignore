@@ -85,6 +85,7 @@ api_config.db
 sites_data.db
 temp_folder/
 temp_folder
+failed_urls.csv
 # pyenv
 #   For a library or package, you
 

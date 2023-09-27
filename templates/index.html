@@ -76,16 +76,32 @@
     <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
 </form>
 
-<div class="row">
+<div class="row mt-2">
     <!-- Group the first three buttons on the left -->
     <div class="col-md-9">
-        <a href="/uploaded_excel" download="matched_data.xlsx" class="btn btn-info mb-4">Download Link Report</a>
-        <a href="/failed_csv" download="failed_urls.csv" class="btn btn-info mb-4">Download Failed Sites List</a>
+        <a href="/download_excel" class="btn btn-info mb-1">Download Current Link Report</a>
+        <a href="/failed_csv" download="failed_urls.csv" class="btn btn-info mb-1">Download Failed Sites List</a>
     </div>
 
+        <!-- Dropdown for files -->
+
+            <div class="col-md-6 mt-2">
+                <div class="row">
+                    <div class="col-md-8 pr-md-1">
+                        <select id="fileDropdown" class="form-control">
+                            <option value="">Select a report to download</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 pl-md-1">
+                        <button onclick="downloadFile()" class="btn btn-info mb-1 w-100">Download</button>
+                    </div>
+                </div>
+            </div>
+
+
     <!-- Align the last button to the right -->
-    <div class="col-md-3 text-md-right">
-        <a onclick="stopProcessing()" class="btn btn-danger mb-4">Stop The Process</a>
+    <div class="col-md-6 d-md-flex justify-content-md-center">
+        <a onclick="stopProcessing()" class="btn btn-danger mb-1">Stop The Process</a>
     </div>
 </div>
 
@@ -114,9 +130,9 @@
             </tbody>
     </table>
 </div>
-<div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">
-        <!-- Confirmation messages will be shown here -->
-</div>
+<!--<div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">-->
+<!--        &lt;!&ndash; Confirmation messages will be shown here &ndash;&gt;-->
+<!--</div>-->
 
 
 

@@ -1,3 +1,35 @@
+// Fetches the list of files and populates the dropdown
+function populateDropdown() {
+    fetch('/get_files')
+    .then(response => response.json())
+    .then(files => {
+        const dropdown = document.getElementById('fileDropdown');
+        files.forEach(file => {
+            const option = document.createElement('option');
+            option.value = file;
+            option.text = file;
+            dropdown.add(option);
+        });
+    });
+}
+
+// Downloads the selected file
+function downloadFile() {
+    const dropdown = document.getElementById('fileDropdown');
+    const selectedFile = dropdown.value;
+    if (selectedFile) {
+        window.location.href = `/download_excel?filename=${selectedFile}`;
+    } else {
+        alert('Please select a file to download.');
+    }
+}
+
+// Call the populateDropdown function on page load
+document.addEventListener("DOMContentLoaded", function() {
+    populateDropdown();
+});
+
+
 // Stop Processing Button
 function stopProcessing() {
     fetch('/stop_processing', { method: 'POST' })
@@ -7,7 +39,10 @@ function stopProcessing() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    // Helper functions
+    const progressElement = document.getElementById("progress");
+    const progressTextElement = document.getElementById("progressText");
+    const messageDivElement = document.getElementById('confirmationMessage');
+
     function createElement(tag, attrs, children) {
         const el = document.createElement(tag);
         for (let key in attrs) {
@@ -62,49 +97,36 @@ document.addEventListener("DOMContentLoaded", function() {
             createAndAppendTableRows(JSON.parse(data.data));
         }
         if (data.message) {
-            const messageDiv = document.getElementById('confirmationMessage');
-            messageDiv.innerHTML = data.message;
-            messageDiv.style.display = "block";
-       if (data.message === "Process stopped" || data.message === "Processing complete.") {
-                document.getElementById("progress").style.display = "none";
+//            messageDivElement.innerHTML = data.message;
+//            messageDivElement.style.display = "block";
+//
+//            if (["Processing complete.", "Process stopped"].includes(data.message)) {
+//                progressElement.style.display = "none";
+//            }
+
+            if (data.message === "Processing Ended") {
+                alert("Job Processing is complete!");
             }
-       // Handle errors from the 'start_emit' function here
-         if (data.error) {
-        alert('Error: ' + data.error);
-    }
+            else if (data.message === "Process stopped") {
+                alert("Job Cancelled By User!");
+            }
+        }
+
+        if (data.error) {
+            alert('Error: ' + data.error);
         }
     });
+
 
     // Progress spinner and text setup
     const progressDiv = createElement('div', {id: 'progress', style: 'display: none'});
     const spinner = createElement('div', {className: 'spinner-border text-primary', role: 'status'});
     const span = createElement('span', {className: 'sr-only', innerText: 'Processing...'});
-    const progressText = createElement('p', {id: 'progressText', innerText: 'Processing...'});
-
+    const progressText = createElement('h3', {id: 'progressText', innerText: 'Processing...'});
+    progressText.style.color = 'red';
     spinner.appendChild(span);
     progressDiv.appendChild(spinner);
     progressDiv.appendChild(progressText);
     document.getElementById("progressContainer").appendChild(progressDiv);
-
-    // Fake scroll sync
-    const table = document.getElementById('dataTable');
-    const fakeScroll = document.getElementById('fakeScroll');
-    const fakeContent = document.getElementById('fakeContent');
-
-    fakeContent.style.width = table.offsetWidth + 'px';
-
-    // Inside your DOMContentLoaded event
-    console.log("DOM fully loaded and parsed");
-
-    // Inside your fake scroll event listeners
-    fakeScroll.addEventListener('scroll', function() {
-        table.parentNode.scrollLeft = fakeScroll.scrollLeft;
-    });
-
-    table.parentNode.addEventListener('scroll', function() {
-        fakeScroll.scrollLeft = table.parentNode.scrollLeft;
-    });
-
-
 
 });

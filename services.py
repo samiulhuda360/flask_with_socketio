@@ -214,7 +214,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
         post_data = {
             'title': formatted_title,
             'slug': title,
-            'status': "publish",
+            'status': "draft",
             'content': content,
             'categories': 1,
             'featured_media': post_id
@@ -239,14 +239,22 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
     return live_link
 
 # Database Operation
+import sqlite3
+
+DATABASE_NAME = "sites_data.db"
+
+
+# Utility function to simplify connection creation
+def connect_db():
+    return sqlite3.connect(DATABASE_NAME)
 
 
 def get_url_data_from_db(t_url):
-    con = sqlite3.connect("sites_data.db")
-    cursor = con.cursor()
+    conn = connect_db()
+    cursor = conn.cursor()
     cursor.execute("SELECT username, app_password FROM sites WHERE sitename=?", (t_url,))
     data = cursor.fetchone()
-    con.close()
+    conn.close()
     if data:
         return {'user': data[0], 'password': data[1]}
     else:
@@ -254,7 +262,7 @@ def get_url_data_from_db(t_url):
 
 
 def get_all_sitenames():
-    conn = sqlite3.connect('sites_data.db')  # Use the correct database name
+    conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("SELECT sitename FROM sites")
@@ -266,24 +274,52 @@ def get_all_sitenames():
 
     return sitenames
 
+
 def get_site_id_from_sitename(sitename):
-    conn = sqlite3.connect("sites_data.db")
+    conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("SELECT site_id FROM sites WHERE sitename=?", (sitename,))
     site_id = cursor.fetchone()
     conn.close()
     return site_id[0] if site_id else None
 
+
 def store_posted_url(sitename, url):
     site_id = get_site_id_from_sitename(sitename)
     if site_id:
-        conn = sqlite3.connect("sites_data.db")
+        conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO links (site_id, url) VALUES (?, ?)", (site_id, url))
         conn.commit()
         conn.close()
     else:
         print(f"Error: No site_id found for sitename {sitename}")
+
+
+def delete_site_and_links(sitename):
+    site_id = get_site_id_from_sitename(sitename)
+    if site_id:
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Start a transaction
+        cursor.execute("BEGIN TRANSACTION")
+
+        # First, delete associated links
+        cursor.execute("DELETE FROM links WHERE site_id=?", (site_id,))
+
+        # Then, delete the site
+        cursor.execute("DELETE FROM sites WHERE site_id=?", (site_id,))
+
+        # Commit the transaction
+        conn.commit()
+        conn.close()
+    else:
+        print(f"Error: No site_id found for sitename {sitename}")
+
+
+
+
 
 # Matching Exact Root Domain
 def extract_domain(url):

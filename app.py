@@ -2,7 +2,7 @@ import os
 import time
 import csv
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for
-from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain)
+from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
@@ -10,6 +10,8 @@ import openpyxl
 from utils import get_api_keys
 import pandas as pd
 import sqlite3
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
@@ -20,7 +22,7 @@ app.config['SESSION_COOKIE_SECURE'] = False
 
 app.secret_key = 'sdfadfasdfasdfasdfasdf'
 
-
+uploaded_filename = None
 Exact_MATCH = False
 SKIP_COM_AU = False
 ONLY_COM_AU = False
@@ -73,20 +75,41 @@ def save_api_config():
     flash("API configuration updated successfully!", "success")
     return redirect(url_for('config_manager'))
 
+# Flask route to handle site deletion
+@app.route('/delete-site', methods=['DELETE'])
+def delete_site_route():
+    sitename = request.args.get('sitename')
+    if not sitename or sitename == "all":
+        return jsonify({"error": "Invalid site name"}), 400
 
+    delete_site_and_links(sitename)
+
+    return jsonify({"message": "Site and associated links deleted successfully"}), 200
+
+@app.route('/get_files')
+def get_files():
+    folder = app.config['UPLOAD_FOLDER']
+    files = os.listdir(folder)
+    return jsonify(files)
 @app.route('/download_excel')
 def download_excel():
-    # Specify the file path where the Excel file is saved
-    excel_file_path = 'data.xlsx'  # Adjust the path as needed
+    global uploaded_filename
+    print(uploaded_filename)
+
+    if not uploaded_filename:
+        return jsonify({"error": "No file available for download"}), 404
+
+    excel_file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_filename)
 
     # Send the file as a response with appropriate headers
     try:
-        return send_file(excel_file_path, as_attachment=True)
+        return send_file(excel_file_path, as_attachment=True, download_name=uploaded_filename)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/failed_csv')
-def matched_download_excel():
+def failed_site_download_excel():
     # Specify the file path where the Excel file is saved
     failed_csv_file_path = 'failed_urls.csv'  # Adjust the path as needed
 
@@ -275,8 +298,8 @@ def update_excel_with_live_link(file_path, row_index, live_url):
     wb = openpyxl.load_workbook(file_path)
     sheet = wb.active
 
-    # Assuming you want to write to column 'H'
-    sheet[f'H{row_index}'] = live_url
+    # Assuming you want to write to column 'J=Live_link'
+    sheet[f'J{row_index}'] = live_url
 
     wb.save(file_path)
 
@@ -304,8 +327,14 @@ def start_emit():
     SKIP_COM_AU = 'skip_au' in request.form
     ONLY_COM_AU = 'only_au' in request.form
 
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], "uploaded_excel.xlsx")
+    global uploaded_filename
+    original_filename = secure_filename(excel_file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], original_filename)
     excel_file.save(file_path)
+
+    # Store the filename in the global variable
+    uploaded_filename = original_filename
+    print(uploaded_filename)
 
     # Load the workbook and select the active sheet
     wb = openpyxl.load_workbook(file_path)
@@ -335,10 +364,10 @@ def start_emit():
                 continue
 
                 # asyncio.run(my_async_function())
-            anchor, linking_url, embed_code, map_embed_title, nap, topic, live_link = row[1:8]
+            anchor, linking_url, embed_code, map_embed_title, name, address, phone, topic, live_link = row[1:10]
 
 
-            if row[7] != None and row[7] != "Failed To Post":
+            if row[9] != None and row[9] != "Failed To Post":
                 print("skipping the row")
                 row_index += 1
                 continue
@@ -401,6 +430,7 @@ def start_emit():
                         break
 
                     # Testing START
+                    nap = name + "<br>" + address + "<br>" + phone +"<br>"
                     live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                             map_embed_title, nap, USE_IMAGES)
 
@@ -460,7 +490,7 @@ def start_emit():
 
     flash("Processed successfully!")
     socketio.emit('update', {"message": "Processing Ended"})
-    return jsonify({"message": "Processing complete."}), 200
+    return jsonify({"message": "Processing Ended"}), 200
 
 
 if __name__ == '__main__':
