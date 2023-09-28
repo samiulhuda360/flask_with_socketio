@@ -214,7 +214,7 @@ def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
         post_data = {
             'title': formatted_title,
             'slug': title,
-            'status': "draft",
+            'status': "publish",
             'content': content,
             'categories': 1,
             'featured_media': post_id

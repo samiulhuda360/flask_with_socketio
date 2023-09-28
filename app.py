@@ -396,6 +396,7 @@ def start_emit():
 
                 # If Exact_MATCH is False, then it's Root Match
                 elif extract_domain(linking_url) in domain_list:
+                    print(linking_url)
                     print("Matched Root Domain inside")
                     continue  # Skip to the next iteration
                 # Skip com.au and org.au Check
