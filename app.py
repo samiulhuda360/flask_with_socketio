@@ -420,8 +420,11 @@ def start_emit():
                 # Extract domains from link_list
                 domain_list = [extract_domain(link) for link in link_list]
 
+
                 # Inside the success condition where you've successfully posted the link:
                 last_used_site_index = site_index  # Update the last used site index.
+
+
 
                 # Exact Match Check
                 if Exact_MATCH:
@@ -466,7 +469,16 @@ def start_emit():
                         break
 
                     # Testing START
+
+                    if name is None:
+                        name = ""
+                    if address is None:
+                        address = ""
+                    if phone is None:
+                        phone = ""
+
                     nap = name + "<br>" + address + "<br>" + phone +"<br>"
+
                     live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                             map_embed_title, nap, USE_IMAGES)
 
