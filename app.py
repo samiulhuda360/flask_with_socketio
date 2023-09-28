@@ -44,7 +44,7 @@ def login_required(f):
 def view_logs():
     # Authentication and authorization checks here
 
-    cmd = ["/usr/bin/journalctl", "-u", "flask_app", "-n", "150"]
+    cmd = ["/usr/bin/journalctl", "-u", "flask_app", "-n", "500"]
 
     try:
         log_data = subprocess.check_output(cmd).decode('utf-8')
