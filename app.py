@@ -49,10 +49,11 @@ def view_logs():
     try:
         log_data = subprocess.check_output(cmd).decode('utf-8')
         error_logs = [line for line in log_data.splitlines() if "ERROR" in line]
+        formatted_logs = "<br>".join(error_logs)
     except subprocess.CalledProcessError as e:
         return f"Error executing command: {str(e)}"
 
-    return render_template("logs.html", log_data=error_logs)
+    return render_template("logs.html", log_data=formatted_logs)
 
 
 #DataBase Operation
