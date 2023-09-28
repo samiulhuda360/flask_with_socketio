@@ -11,6 +11,8 @@ from utils import get_api_keys
 import pandas as pd
 import sqlite3
 from werkzeug.utils import secure_filename
+import subprocess
+
 
 
 app = Flask(__name__)
@@ -26,6 +28,32 @@ uploaded_filename = None
 Exact_MATCH = False
 SKIP_COM_AU = False
 ONLY_COM_AU = False
+
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+
+    return decorated_function
+@app.route('/logs', methods=['GET'])
+@login_required
+def view_logs():
+    # Authentication and authorization checks here
+
+    cmd = ["journalctl", "-u", "flask_app", "-n", "50"]
+
+    try:
+        log_data = subprocess.check_output(cmd).decode('utf-8')
+    except subprocess.CalledProcessError as e:
+        return f"Error executing command: {str(e)}"
+
+    return render_template("logs.html", log_data=log_data)
+
+
 #DataBase Operation
 def get_link_list_from_db(host_url):
     # Establish a connection to the SQLite database
@@ -156,14 +184,6 @@ def logout():
     return redirect(url_for('login'))  # Redirect to login page or another page of your choice.
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
-
-    return decorated_function
 
 
 @app.route('/')
