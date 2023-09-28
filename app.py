@@ -178,8 +178,9 @@ def uploaded_download_excel():
 def login():
     if request.method == 'POST':
         # Dummy logic: replace with real authentication logic
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+
         print(f"Received username: {username}, password: {password}")
 
         if username == "admin" and password == "p@ssword123":  # Dummy check, replace with real logic
