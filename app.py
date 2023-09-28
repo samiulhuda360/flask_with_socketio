@@ -481,7 +481,7 @@ def start_emit():
                     if phone is None:
                         phone = ""
 
-                    nap = name + address + phone +"<br>"
+                    nap = str(name) + str(address) + str(phone) +"<br>"
 
                     live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                             map_embed_title, nap, USE_IMAGES)
