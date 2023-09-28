@@ -472,12 +472,16 @@ def start_emit():
 
                     if name is None:
                         name = ""
+                    else:
+                        name = name + "<br>"
                     if address is None:
                         address = ""
+                    else:
+                        address = address + "<br>"
                     if phone is None:
                         phone = ""
 
-                    nap = name + "<br>" + address + "<br>" + phone +"<br>"
+                    nap = name + address + phone +"<br>"
 
                     live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
                                             map_embed_title, nap, USE_IMAGES)
