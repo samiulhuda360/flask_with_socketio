@@ -1,7 +1,7 @@
 import os
 import time
 import csv
-from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for, send_from_directory
 from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links)
 from flask_socketio import SocketIO, emit
 import json
@@ -116,11 +116,11 @@ def delete_site_route():
 
     return jsonify({"message": "Site and associated links deleted successfully"}), 200
 
-@app.route('/get_files')
-def get_files():
-    folder = app.config['UPLOAD_FOLDER']
-    files = os.listdir(folder)
-    return jsonify(files)
+# @app.route('/get_files')
+# def get_files():
+#     folder = app.config['UPLOAD_FOLDER']
+#     files = os.listdir(folder)
+#     return jsonify(files)
 @app.route('/download_excel')
 def download_excel():
     global uploaded_filename
@@ -137,6 +137,18 @@ def download_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/get_files')
+def get_files():
+    # List all files in the UPLOAD_FOLDER
+    files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f))]
+    return jsonify(files)
+
+@app.route('/download_excel_from_file')
+def download_excel_from_file():
+    filename = request.args.get('filename')
+    if filename:
+        return send_from_directory(directory=app.config['UPLOAD_FOLDER'], path=filename, as_attachment=True)
+    return "File not found", 404
 
 @app.route('/failed_csv')
 def failed_site_download_excel():

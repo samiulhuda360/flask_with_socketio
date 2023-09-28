@@ -1,27 +1,35 @@
-// Fetches the list of files and populates the dropdown
+    // Fetches the list of files from the server and populates the dropdown
 function populateDropdown() {
-    fetch('/get_files')
-    .then(response => response.json())
-    .then(files => {
-        const dropdown = document.getElementById('fileDropdown');
-        files.forEach(file => {
-            const option = document.createElement('option');
-            option.value = file;
-            option.text = file;
-            dropdown.add(option);
+        fetch('/get_files')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(files => {
+            const dropdown = document.getElementById('fileDropdown');
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.text = file;
+                dropdown.add(option);
+            });
+        })
+        .catch(error => {
+            console.log('There was a problem with the fetch operation:', error.message);
         });
-    });
-}
+    }
 
 // Downloads the selected file
 function downloadFile() {
-    const dropdown = document.getElementById('fileDropdown');
-    const selectedFile = dropdown.value;
-    if (selectedFile) {
-        window.location.href = `/download_excel?filename=${selectedFile}`;
-    } else {
-        alert('Please select a file to download.');
-    }
+        const dropdown = document.getElementById('fileDropdown');
+        const selectedFile = dropdown.value;
+        if (selectedFile) {
+            window.location.href = `/download_excel_from_file?filename=${selectedFile}`;
+        } else {
+            alert('Please select a file to download.');
+        }
 }
 
 // Call the populateDropdown function on page load
