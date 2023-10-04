@@ -22,7 +22,7 @@ def setup_database():
 
 def get_api_keys():
     try:
-        setup_database()  # Setup the database before attempting to fetch keys
+        setup_database()  # Set up the database before attempting to fetch keys
 
         con = sqlite3.connect('api_config.db')
         cur = con.cursor()

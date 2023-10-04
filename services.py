@@ -86,7 +86,6 @@ def upload_image_data(target_url, headers, image_path):
 
 
 def construct_image_wp(image_data, query):
-
     if image_data != None:
         try:
             image_title = query.replace('-', ' ').split('.')[0]
@@ -108,7 +107,7 @@ def construct_image_wp(image_data, query):
 
 
 # WordPress Posting
-def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_embed_title, nap, USE_IMAGES):
+def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_embed_title, nap, USE_IMAGES, NO_BODY_IMAGE):
 
     image_wp, post_id = construct_image_wp(image_data, anchor) if USE_IMAGES else ("", None)
 
@@ -119,7 +118,7 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
     paragraph_template = f"<p></p> Must add the provided HTML tag without changing anything, inside any of the " \
-                         f"paragraphs: {link_tag}. Do not change anchor tag or the link of {link_tag}"
+                         f"paragraphs(Must be inside paragraph, not outside): {link_tag}. Do not change anchor tag or the link of {link_tag}"
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(
@@ -176,7 +175,10 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
         nap = ""
     try:
         if USE_IMAGES:
-            content = intro_body +"<br>" + image_wp + second_body + map_embed_title + embed_code + "<br>" + "<p>" + nap + "</p>" + final_part
+            if not NO_BODY_IMAGE:
+                content = intro_body +"<br>" + image_wp + second_body + map_embed_title + embed_code + "<br>" + "<p>" + nap + "</p>" + final_part
+            else:
+                content = intro_body +"<br>" + second_body + map_embed_title + embed_code + "<br>" + "<p>" + nap + "</p>" + final_part
         else:
             content = first_part + "<br>" + map_embed_title + embed_code + "<br>" + "<p>" + nap + "</p>" + final_part
     except:
@@ -356,7 +358,7 @@ def save_matched_to_excel(site_index, sitename, linking_url):
 
 
 
-def process_site(site_json, host_site, user, password, topic, anchor, client_link, embed_code, map_embed_title, nap, USE_IMAGES):
+def process_site(site_json, user, password, topic, anchor, client_link, embed_code, map_embed_title, nap, USE_IMAGES, NO_BODY_IMAGE):
     credentials = user + ':' + password
     token = base64.b64encode(credentials.encode())
     headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
@@ -371,7 +373,7 @@ def process_site(site_json, host_site, user, password, topic, anchor, client_lin
         image_data = None  # or some default value
         post_id = ""
     try:
-        final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES)
+        final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES, NO_BODY_IMAGE)
     except:
         final_content = ""
     print("before post url")

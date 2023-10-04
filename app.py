@@ -28,6 +28,7 @@ uploaded_filename = None
 Exact_MATCH = False
 SKIP_COM_AU = False
 ONLY_COM_AU = False
+NO_BODY_IMAGE = False
 
 
 
@@ -43,17 +44,17 @@ def login_required(f):
 @login_required
 def view_logs():
     # Authentication and authorization checks here
-
-    cmd = ["/usr/bin/journalctl", "-u", "flask_app", "-n", "500"]
+    cmd = ["/usr/bin/journalctl", "-u", "flask_app", "-n", "300"]
 
     try:
         log_data = subprocess.check_output(cmd).decode('utf-8')
-        error_logs = [line for line in log_data.splitlines() if "ERROR" in line]
-        formatted_logs = "<br>".join(error_logs)
+        # error_logs = [line for line in log_data.splitlines() if "ERROR" in line.upper()]
+        formatted_logs = "<br>".join(log_data.splitlines())
     except subprocess.CalledProcessError as e:
         return f"Error executing command: {str(e)}"
 
     return render_template("logs.html", log_data=formatted_logs)
+
 
 
 #DataBase Operation
@@ -361,6 +362,8 @@ def start_emit():
     Exact_MATCH = 'exact_match' in request.form
     SKIP_COM_AU = 'skip_au' in request.form
     ONLY_COM_AU = 'only_au' in request.form
+    NO_BODY_IMAGE = 'no_body_image' in request.form
+    print("NO BODY IMAGE:", NO_BODY_IMAGE  )
 
     global uploaded_filename
     original_filename = secure_filename(excel_file.filename)
@@ -483,8 +486,8 @@ def start_emit():
 
                     nap = str(name) + str(address) + str(phone) +"<br>"
 
-                    live_url = process_site(site_json, host_url, user, password, topic, anchor, linking_url, embed_code,
-                                            map_embed_title, nap, USE_IMAGES)
+                    live_url = process_site(site_json, user, password, topic, anchor, linking_url, embed_code,
+                                            map_embed_title, nap, USE_IMAGES, NO_BODY_IMAGE)
 
                     if live_url == "Failed To Post":
                         with open('failed_urls.csv', 'a', newline='') as f:
