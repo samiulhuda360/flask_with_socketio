@@ -128,7 +128,7 @@ def download_excel():
     print(uploaded_filename)
 
     if not uploaded_filename:
-        return jsonify({"error": "No file available for download"}), 404
+        return jsonify({"error": "No current file running for download"}), 404
 
     excel_file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_filename)
 
@@ -137,6 +137,20 @@ def download_excel():
         return send_file(excel_file_path, as_attachment=True, download_name=uploaded_filename)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/delete-file', methods=['POST'])
+@login_required
+def delete_uploaded_file():
+    filename = request.form.get('filename')
+    if not filename:
+        return jsonify({"error": "No filename provided"}), 400
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return jsonify({"message": "File deleted successfully"}), 200
+    else:
+        return jsonify({"error": "File not found"}), 404
 
 @app.route('/get_files')
 def get_files():

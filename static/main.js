@@ -32,6 +32,47 @@ function downloadFile() {
         }
 }
 
+function deleteFile() {
+    var confirmation = confirm("Are you sure you want to delete this file?");
+    if (confirmation) {
+        var selectedFile = document.getElementById("fileDropdown").value;
+
+        if (selectedFile) {
+            var formData = new FormData();
+            formData.append("filename", selectedFile);
+
+            fetch("/delete-file", {
+                method: "POST",
+                body: formData,
+                credentials: 'same-origin'  // This is to ensure cookies are sent with the request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    // Optionally, remove the file from the dropdown:
+                    var dropdown = document.getElementById("fileDropdown");
+                    dropdown.remove(dropdown.selectedIndex);
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error deleting the file.");
+            });
+        } else {
+            alert("Please select a file to delete.");
+        }
+    }
+}
+
+
 // Call the populateDropdown function on page load
 document.addEventListener("DOMContentLoaded", function() {
     populateDropdown();
