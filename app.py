@@ -14,6 +14,9 @@ from werkzeug.utils import secure_filename
 import subprocess
 import glob
 from operator import itemgetter
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 
@@ -197,22 +200,24 @@ def uploaded_download_excel():
 
 
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Dummy logic: replace with real authentication logic
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
-        print(f"Received username: {username}, password: {password}")
+        admin_username = os.environ.get('ADMIN_USERNAME')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
 
-        if username == "admin" and password == "p@ssword123":  # Dummy check, replace with real logic
+        if username == admin_username and password == admin_password:
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
             flash('Incorrect credentials.')
             return redirect(url_for('login'))
     return render_template('login.html')
+
 
 
 @app.route('/logout')
