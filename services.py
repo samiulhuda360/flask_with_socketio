@@ -117,12 +117,12 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     # Define the HTML tags and content
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
-    paragraph_template = f"<p></p> Must add the provided HTML tag without changing anything, inside any of the " \
-                         f"paragraphs(Must be inside paragraph, not outside): {link_tag}. Do not change anchor tag or the link of {link_tag}"
+
+    paragraph_template = f"<p></p> Please insert the provided HTML tag, which is {link_tag}, inside ONLY ONE of the paragraphs. The anchor link should be used ONLY ONCE and it must be within a paragraph, not outside. Do not alter the anchor tag or the link."
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(
-        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The heading should have {h2_heading} tags and the paragraph should have {paragraph_template} tags."
+        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). Use the {h2_heading} tags for the heading. Also, ensure to follow the {paragraph_template} instructions for the paragraph."
     )
     try:
         second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")

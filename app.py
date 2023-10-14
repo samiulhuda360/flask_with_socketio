@@ -12,6 +12,8 @@ import pandas as pd
 import sqlite3
 from werkzeug.utils import secure_filename
 import subprocess
+import glob
+from operator import itemgetter
 
 
 
@@ -138,24 +140,30 @@ def download_excel():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/delete-file', methods=['POST'])
-@login_required
-def delete_uploaded_file():
-    filename = request.form.get('filename')
-    if not filename:
-        return jsonify({"error": "No filename provided"}), 400
 
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    if os.path.exists(file_path):
+@app.route('/delete-all-excel-files', methods=['POST'])
+@login_required
+def delete_all_excel_files():
+    excel_files = glob.glob(os.path.join(app.config['UPLOAD_FOLDER'], "*.xlsx"))
+
+    if not excel_files:
+        return jsonify({"message": "No Excel files found to delete."}), 200
+
+    for file_path in excel_files:
         os.remove(file_path)
-        return jsonify({"message": "File deleted successfully"}), 200
-    else:
-        return jsonify({"error": "File not found"}), 404
+
+    return jsonify({"message": "All Excel files deleted successfully"}), 200
+
 
 @app.route('/get_files')
 def get_files():
     # List all files in the UPLOAD_FOLDER
-    files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f))]
+    files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
+             os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f))]
+
+    # Get creation time for each file and sort by latest
+    files = sorted(files, key=lambda x: os.path.getctime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
+
     return jsonify(files)
 
 @app.route('/download_excel_from_file')
