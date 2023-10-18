@@ -34,6 +34,7 @@ Exact_MATCH = False
 SKIP_COM_AU = False
 ONLY_COM_AU = False
 NO_BODY_IMAGE = False
+SKIP_USED_DOMAINS = False
 
 
 
@@ -391,6 +392,8 @@ def start_emit():
     ONLY_COM_AU = 'only_au' in request.form
     NO_BODY_IMAGE = 'no_body_image' in request.form
     print("NO BODY IMAGE:", NO_BODY_IMAGE  )
+    used_domains = set()  # Step 1: Initialize the set
+    SKIP_USED_DOMAINS = 'skip_used_domains' in request.form  # Step 2: Check the option from frontend
 
     global uploaded_filename
     original_filename = secure_filename(excel_file.filename)
@@ -410,7 +413,8 @@ def start_emit():
     sitenames = get_all_sitenames()
     num_sites = len(sitenames)
 
-    total_rows = len(list(sheet.iter_rows(values_only=True)))
+    rows = list(sheet.iter_rows(values_only=True))
+    total_rows = len(rows)
     row_index = 0
 
     last_used_site_index = -1  # Start with -1 so that for the first row, it starts with 0.
@@ -419,7 +423,7 @@ def start_emit():
         writer.writerow(["Failed URLs"])
     try:
         while row_index < total_rows and should_continue_processing:
-            row = list(sheet.iter_rows(values_only=True))[row_index]
+            row = rows[row_index]
 
             if row_index == 0:
                 row_index += 1
@@ -442,6 +446,8 @@ def start_emit():
             failed_post_count = 0  # Counter for failed posts.
             start_site_index = (last_used_site_index + 1) % num_sites  # Start from the next site.
 
+
+
             for offset in range(num_sites):
                 site_index = (start_site_index + offset) % num_sites  # Wrap around using modulo.
                 host_url = sitenames[site_index].strip()
@@ -449,10 +455,13 @@ def start_emit():
                 link_list = get_link_list_from_db(host_url)
                 # Extract domains from link_list
                 domain_list = [extract_domain(link) for link in link_list]
-
-
                 # Inside the success condition where you've successfully posted the link:
                 last_used_site_index = site_index  # Update the last used site index.
+
+                # Step 3: Check against the set
+                if SKIP_USED_DOMAINS and host_url in used_domains:
+                    print(f"Skipping {host_url} because it has been used before.")
+                    continue
 
 
 
@@ -526,6 +535,8 @@ def start_emit():
                             continue
                         else:
                             break
+                            # Step 4: Add to the set
+                    used_domains.add(host_url)
                     update_excel_with_live_link(file_path, row_index + 1, live_url) # Updating Excel
 
                     if live_url != "Failed To Post":
