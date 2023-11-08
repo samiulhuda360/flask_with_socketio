@@ -51,8 +51,8 @@ def process_image(keyword, USE_IMAGES):
 
         im1 = im.resize((570, 330))
 
-        saved_path = os.path.join(folder_path, f'{keyword}-image.jpg')
-
+        slugified_keyword = keyword.replace(' ', '-').lower()
+        saved_path = os.path.join(folder_path, f'{slugified_keyword}-image.jpg')
         try:
             im1.save(saved_path)
         except IOError as e:
@@ -118,7 +118,7 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
 
-    paragraph_template = f"<p></p> Please insert the provided HTML tag, which is {link_tag}, inside ONLY ONE of the paragraphs. The anchor link should be used ONLY ONCE and it must be within a paragraph, not outside. Do not alter the anchor tag or the link."
+    paragraph_template = f"<p></p> Please insert the provided HTML tag, which is {link_tag}, inside ONLY ANY ONE of the paragraphs. The anchor link should be used ONLY ONCE and it must be within a paragraph, not outside. Do not alter the anchor tag or the link."
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(

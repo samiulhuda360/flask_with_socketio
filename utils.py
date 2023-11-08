@@ -59,7 +59,11 @@ def openAI_output(self):
             messages=[
                 {"role": "user",
                  "content": self },
-            ]
+            ],
+            temperature=0.4,
+            top_p=0.4,
+            frequency_penalty=0.6,
+            presence_penalty=0.6
         )
         output = response.choices[0]["message"]["content"].strip()
         return output
