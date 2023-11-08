@@ -4,7 +4,6 @@ from utils import openAI_output, Pexels_API_KEY
 from PIL import Image
 import base64
 import openpyxl
-import sqlite3
 import re
 import os
 from config import Pexels_API_ENDPOINT
@@ -32,8 +31,13 @@ def process_image(keyword, USE_IMAGES):
 
     if response.status_code == 200:
         data = response.json()
+        try:
+            r = data['photos'][randrange(0, 6)]['src']['medium']
+            print("Pexel Image Received")
+        except:
+            r = data['photos'][randrange(0, 3)]['src']['medium']
+            print("Pexel Image Received at except")
 
-        r = data['photos'][randrange(0, 3)]['src']['medium']
         img_data = requests.get(r).content
 
 
@@ -276,7 +280,6 @@ def get_all_sitenames():
 
     return sitenames
 
-
 def get_site_id_from_sitename(sitename):
     conn = connect_db()
     cursor = conn.cursor()
@@ -318,9 +321,6 @@ def delete_site_and_links(sitename):
         conn.close()
     else:
         print(f"Error: No site_id found for sitename {sitename}")
-
-
-
 
 
 # Matching Exact Root Domain
@@ -369,9 +369,11 @@ def process_site(site_json, user, password, topic, anchor, client_link, embed_co
     if USE_IMAGES:
         image_data = upload_image_data(site_json, headers, image_path)
         image_wp, post_id = construct_image_wp(image_data, topic)
+        print("Image Posted")
     else:
         image_data = None  # or some default value
         post_id = ""
+    print("Start Content Creation")
     try:
         final_content = create_post_content(anchor, topic, client_link, image_data, embed_code, map_embed_title, nap, USE_IMAGES, NO_BODY_IMAGE)
     except:
