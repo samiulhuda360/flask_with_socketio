@@ -60,8 +60,6 @@ def openAI_output(self):
                 {"role": "user",
                  "content": self },
             ],
-            temperature=0.4,
-            top_p=0.4,
             frequency_penalty=0.6,
             presence_penalty=0.6
         )
