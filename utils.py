@@ -60,8 +60,8 @@ def openAI_output(self):
                 {"role": "user",
                  "content": self },
             ],
-            frequency_penalty=0.4,
-            presence_penalty=0.4
+            frequency_penalty=0.2,
+            presence_penalty=0.2
         )
         output = response.choices[0]["message"]["content"].strip()
         return output

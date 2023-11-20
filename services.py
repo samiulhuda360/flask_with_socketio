@@ -122,12 +122,33 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     h2_heading = "<h2></h2>"
     link_tag = f"<a href='{linking_url}' rel='dofollow'>{anchor}</a>"
 
-    paragraph_template = f"<p></p> Please insert the provided HTML tag, which is {link_tag}, inside ONLY ANY ONE of the paragraphs. The anchor link should be used ONLY ONCE and it must be within a paragraph, not outside. Do not alter the anchor tag or the link."
+    paragraph_template = f"Please insert the provided HTML tag, which is {link_tag}, inside ONLY ANY ONE of the paragraphs. The anchor link/{link_tag} should be used ONLY ONCE in a paragraph and it must be within a paragraph, not outside. Do not alter/change the anchor tag or the link or {link_tag}."
 
     # Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction)
     second_body = openAI_output(
-        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). Use the {h2_heading} tags for the heading. Also, ensure to follow the {paragraph_template} instructions for the paragraph."
+        f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The introduction of the article is  this:, '{intro_body}' already written. Use the {h2_heading} tags for the heading. Also, ensure to follow the {paragraph_template} instructions for the paragraph."
     )
+    #
+    # h2_heading_tags = "<h2></h2>"  # Template for H2 headings
+    # link_tag_template = "<a href='{url}' rel='dofollow'>{anchor_text}</a>"  # Template for link tag
+    # paragraph_instructions = "Include the link tag only once within one of the paragraphs."
+    #
+    #
+    # # Format the link tag with the provided URL and anchor text
+    # link_tag = link_tag_template.format(url=linking_url, anchor_text=anchor)
+    #
+    # # Prompt for generating HTML content
+    # prompt = f"""
+    # Create HTML content with the following structure:
+    # 1. content: Include 1-2 paragraphs with a maximum of 1-2 H2 headings. Use the {h2_heading_tags} tags for the headings. Follow these instructions for the paragraph content: {paragraph_instructions}.
+    # 2. Link Tag to Include: {link_tag}
+    #
+    # Ensure the link tag is used only once within the paragraphs. Don't use title(H1) for the content.
+    # """
+    #
+    # second_body = openAI_output(prompt)
+    #
+    # print(link_tag)
     try:
         second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")
     except:
@@ -145,13 +166,17 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
 
 
     # Removing <p></p> tags if they wrap <a> tags
-    second_body_formated = re.sub(r'<p>(<a [^>]+>.*?</a>)</p>', r'\1', second_body_formated)
+    second_body_formated1 = re.sub(r'<p>(<a [^>]+>.*?</a>)</p>', r'\1', second_body_formated)
 
     # Replacing links
     linking_url = linking_url
     anchor = anchor
     second_body_formated_final = re.sub(r"<a href=[\"']([^\"']+)[\"'][^>]+rel=[\"']dofollow[\"']>[^<]+<\/a>",
-                                        replace_link, second_body_formated)
+                                        replace_link, second_body_formated1)
+    print(second_body_formated1)
+
+    print(second_body_formated_final)
+
 
 
 
@@ -187,6 +212,8 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
             content = first_part + "<br>" + map_embed_title + embed_code + "<br>" + "<p>" + nap + "</p>" + final_part
     except:
         content = ""
+
+    print("Final Content:", content)
     return content
 
 

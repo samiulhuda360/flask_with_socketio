@@ -418,7 +418,7 @@ def start_emit():
     row_index = 0
 
     last_used_site_index = -1  # Start with -1 so that for the first row, it starts with 0.
-    with open('failed_urls.csv', 'w', newline='') as f:
+    with open('failed_urls.csv', 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Failed URLs"])
     try:
