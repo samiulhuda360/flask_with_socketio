@@ -2,7 +2,7 @@ import os
 import time
 import csv
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for, send_from_directory
-from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links)
+from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
@@ -15,10 +15,9 @@ import subprocess
 import glob
 from operator import itemgetter
 from dotenv import load_dotenv
+from random import randrange
 
 load_dotenv()
-
-
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
@@ -311,7 +310,63 @@ def site_manager():
     return render_template('site_manager.html', filtered_sites=sites_data, all_sitenames=all_sitenames)
 
 
+@app.route('/restapi_test')
+def test_page():
+    return render_template('restapi_test.html')
 
+
+# Route to handle stopping the test
+@app.route('/stop_test', methods=['POST'])
+@login_required
+def stop_test():
+    global test_running
+    test_running = False
+    return jsonify({"message": "Test stopping initiated"}), 200
+
+@app.route('/apitest', methods=['GET'])
+@login_required
+def apitest():
+    global test_running
+    test_running = True
+    site_details = fetch_site_details()
+    failed_sites_excel_path = 'failed_sites.xlsx'
+
+    # Initialize a new blank Excel file
+    if os.path.exists(failed_sites_excel_path):
+        os.remove(failed_sites_excel_path)
+    pd.DataFrame(columns=['Failed Site URL']).to_excel(failed_sites_excel_path, index=False)
+
+    if site_details:
+        for site in site_details:
+            if not test_running:
+                break  # Stop the testing if the global variable is False
+
+            site_url, username, app_password = site
+            content = "This is a test post from the API."
+            time.sleep(randrange(5, 10))
+            success = test_post_to_wordpress(site_url, username, app_password, content)
+
+            if not success:
+                # Read the current file, append new data, and save it again
+                existing_df = pd.read_excel(failed_sites_excel_path)
+                new_df = pd.DataFrame([[site_url]], columns=['Failed Site URL'])
+                updated_df = pd.concat([existing_df, new_df], ignore_index=True)
+                updated_df.to_excel(failed_sites_excel_path, index=False)
+
+                message = f"Failed to publish post to {site_url}."
+            else:
+                message = f"Post published successfully to {site_url}."
+                post_id = success.json().get('id')
+                delete_response = delete_from_wordpress(site_url, username, app_password, post_id)
+                if delete_response and delete_response.status_code == 200:
+                    print(f"Post deleted successfully from {site_url}.")
+                else:
+                    print(f"Failed to delete post from {site_url}.")
+
+            socketio.emit('apitest_update', {'message': message})
+
+    socketio.emit('apitest_complete', {'message': "API Test completed"})
+    return jsonify({"message": "API Test completed"}), 200
 
 
 @app.route('/upload-excel', methods=['POST'])
@@ -432,7 +487,7 @@ def start_emit():
                 row_index += 1
                 continue
 
-                # asyncio.run(my_async_function())
+        # asyncio.run(my_async_function())
             anchor, linking_url, embed_code, map_embed_title, name, address, phone, topic, live_link = row[1:10]
 
 
@@ -585,6 +640,17 @@ def start_emit():
     socketio.emit('update', {"message": "Processing Ended"})
     return jsonify({"message": "Processing Ended"}), 200
 
+
+@app.route('/download_failed_sites')
+def download_failed_sites():
+    # Specify the file path where the Excel file is saved
+    failed_csv_file_path = 'failed_sites.xlsx'  # Adjust the path as needed
+
+    # Send the file as a response with appropriate headers
+    try:
+        return send_file(failed_csv_file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

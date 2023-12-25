@@ -410,3 +410,47 @@ def process_site(site_json, user, password, topic, anchor, client_link, embed_co
 
     return post_url
 
+
+# Function to fetch WordPress site details from the database
+def fetch_site_details():
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        query = "SELECT sitename, username, app_password FROM sites"
+        cursor.execute(query)
+        return cursor.fetchall()  # Assuming there's only one site
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+# Function to post content to WordPress site
+def test_post_to_wordpress(site_url, username, app_password, content):
+    url_json = "https://" + site_url + "/wp-json/wp/v2/posts"
+    credentials = username + ':' + app_password
+    token = base64.b64encode(credentials.encode())
+    headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
+    data = {
+        "title": "Test Post from API",
+        "content": content,
+        "status": "publish"
+    }
+
+    try:
+        response = requests.post(url_json, headers=headers, json=data)
+        return response
+    except requests.exceptions.ConnectionError:
+        return None  # Or return an appropriate response indicating a connection error
+
+def delete_from_wordpress(site_url, username, app_password, post_id):
+    url_json = "https://" + site_url + f"/wp-json/wp/v2/posts/{post_id}"
+    credentials = username + ':' + app_password
+    token = base64.b64encode(credentials.encode())
+    headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
+
+    try:
+        response = requests.delete(url_json, headers=headers)
+        return response
+    except requests.exceptions.ConnectionError:
+        return None  # Or return an appropriate response indicating a connection error
