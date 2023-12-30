@@ -122,11 +122,7 @@ def delete_site_route():
 
     return jsonify({"message": "Site and associated links deleted successfully"}), 200
 
-# @app.route('/get_files')
-# def get_files():
-#     folder = app.config['UPLOAD_FOLDER']
-#     files = os.listdir(folder)
-#     return jsonify(files)
+
 @app.route('/download_excel')
 def download_excel():
     global uploaded_filename
@@ -312,8 +308,37 @@ def site_manager():
 
 @app.route('/restapi_test')
 def test_page():
-    return render_template('restapi_test.html')
+    sitename_filter = request.args.get('sitename_filter', None)
 
+    conn = sqlite3.connect('sites_data.db')
+    cursor = conn.cursor()
+
+    message = ""
+
+    if sitename_filter:
+        cursor.execute('SELECT * FROM sites WHERE sitename = ?', (sitename_filter,))
+        site = cursor.fetchone()
+
+        if site:
+            site_id, sitename, username, app_password = site
+            response = test_post_to_wordpress(sitename, username, app_password, "This is a test post from the API.")
+
+            if response and response.status_code == 201:
+                post_id = response.json().get('id')
+                delete_response = delete_from_wordpress(sitename, username, app_password, post_id)
+                if delete_response and delete_response.status_code == 200:
+                    message = f"Content posted to {sitename} successfully and then deleted."
+                else:
+                    message = f"Content posted to {sitename} successfully, but failed to delete."
+            else:
+                message = f"Failed to post on {sitename}."
+
+    cursor.execute('SELECT DISTINCT sitename FROM sites')
+    all_sitenames = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return render_template('restapi_test.html', message=message, all_sitenames=all_sitenames)
 
 # Route to handle stopping the test
 @app.route('/stop_test', methods=['POST'])
@@ -367,6 +392,9 @@ def apitest():
 
     socketio.emit('apitest_complete', {'message': "API Test completed"})
     return jsonify({"message": "API Test completed"}), 200
+
+
+
 
 
 @app.route('/upload-excel', methods=['POST'])

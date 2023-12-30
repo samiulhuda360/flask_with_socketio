@@ -1,7 +1,7 @@
 # routes.py
 from flask import Flask, render_template, request, redirect, url_for
 import openpyxl
-from services import download_image, process_image, upload_image, create_post_content, post_article
+from services import process_image, create_post_content, post_article
 
 app = Flask(__name__)
 
