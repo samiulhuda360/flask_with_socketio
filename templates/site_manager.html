@@ -93,16 +93,18 @@
     </form>
 </div>
 
-
-
-        <!-- Right Form -->
- <div class="col-md-6">
-   <form action="/upload-excel" method="POST" enctype="multipart/form-data">
-            <input type="file" name="excel_data">
-            <input type="submit" value="Upload">
-   </form>
-  </div>
+<!-- Right Form -->
+<div class="col-md-6">
+    <form action="/upload-excel" method="POST" enctype="multipart/form-data">
+        <input type="file" name="excel_data" class="mb-4">
+        <br>
+        <!-- Existing Upload Button -->
+        <input type="submit" value="Upload Site Data" class="btn btn-primary">
+        <!-- New Upload Template Button -->
+        <a href="/download_excel_template" class="btn btn-success">Download Excel Template</a>
+    </form>
 </div>
+
 
 
 <div class="container mt-4">

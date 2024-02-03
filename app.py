@@ -416,9 +416,8 @@ def upload_excel_site_data():
     cursor = conn.cursor()
 
     for _, row in df.iterrows():
-        sitename, username, app_password = row['sitename'], row['username'], row['app_password']
-        # Convert link value to string and strip whitespace
-        link = str(row.get('links', '')).strip()
+        sitename, username, app_password = row['Sitename'], row['Username'], row['Application_Password']
+        added_link = row['Added_Link'] if 'Added_Link' in row and not pd.isnull(row['Added_Link']) else None
 
         cursor.execute('SELECT site_id FROM sites WHERE sitename=?', (sitename,))
         site_id = cursor.fetchone()
@@ -431,15 +430,15 @@ def upload_excel_site_data():
                            (sitename, username, app_password))
             site_id = (cursor.lastrowid,)
 
-        # Insert link if it doesn't exist for the site and link is not blank
-        if link:  # Now it checks if link is not blank
-            cursor.execute('SELECT url FROM links WHERE site_id=? AND url=?', (site_id[0], link))
+        # Insert link if it doesn't exist for the site and the link is not None
+        if added_link is not None:
+            cursor.execute('SELECT url FROM links WHERE site_id=? AND url=?', (site_id[0], added_link))
             if not cursor.fetchone():
-                cursor.execute('INSERT INTO links (site_id, url) VALUES (?, ?)', (site_id[0], link))
+                cursor.execute('INSERT INTO links (site_id, url) VALUES (?, ?)', (site_id[0], added_link))
 
     conn.commit()
     conn.close()
-    flash('Site Data Updated successfully!', 'success')  # 'success' is a category of the message
+    flash('Site Data Updated successfully!', 'success')
     return redirect(url_for('site_manager'))
 
 
@@ -681,6 +680,17 @@ def download_failed_sites():
     # Send the file as a response with appropriate headers
     try:
         return send_file(failed_csv_file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/download_excel_template')
+def download_excel_template():
+    # Specify the file path where the Excel file is saved
+    excel_template_file_path = 'excel_template_pbn.xlsx'  # Adjust the path as needed
+
+    # Send the file as a response with appropriate headers
+    try:
+        return send_file(excel_template_file_path, as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
