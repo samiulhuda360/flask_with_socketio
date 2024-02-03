@@ -396,7 +396,6 @@ def apitest():
 
 
 
-
 @app.route('/upload-excel', methods=['POST'])
 @login_required
 def upload_excel_site_data():
@@ -417,7 +416,9 @@ def upload_excel_site_data():
     cursor = conn.cursor()
 
     for _, row in df.iterrows():
-        sitename, username, app_password, link = row['sitename'], row['username'], row['app_password'], row['links']
+        sitename, username, app_password = row['sitename'], row['username'], row['app_password']
+        # Convert link value to string and strip whitespace
+        link = str(row.get('links', '')).strip()
 
         cursor.execute('SELECT site_id FROM sites WHERE sitename=?', (sitename,))
         site_id = cursor.fetchone()
@@ -430,14 +431,17 @@ def upload_excel_site_data():
                            (sitename, username, app_password))
             site_id = (cursor.lastrowid,)
 
-        # Insert link if it doesn't exist for the site
-        cursor.execute('SELECT url FROM links WHERE site_id=? AND url=?', (site_id[0], link))
-        if not cursor.fetchone():
-            cursor.execute('INSERT INTO links (site_id, url) VALUES (?, ?)', (site_id[0], link))
+        # Insert link if it doesn't exist for the site and link is not blank
+        if link:  # Now it checks if link is not blank
+            cursor.execute('SELECT url FROM links WHERE site_id=? AND url=?', (site_id[0], link))
+            if not cursor.fetchone():
+                cursor.execute('INSERT INTO links (site_id, url) VALUES (?, ?)', (site_id[0], link))
 
     conn.commit()
     conn.close()
+    flash('Site Data Updated successfully!', 'success')  # 'success' is a category of the message
     return redirect(url_for('site_manager'))
+
 
 
 
