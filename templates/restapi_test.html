@@ -64,7 +64,7 @@
     <div class="container mt-5">
         <h2>WordPress RestAPI Test Page</h2>
         <div class="mt-5">
-        <button id="startTest" class="btn btn-primary">Start Test</button>
+        <button id="startTest" class="btn btn-primary">Start Full Test</button>
         <!-- Download button for the Excel file -->
         <a href="/download_failed_sites" class="btn btn-info" id="downloadFailedSites">Download Failed Sites</a>
         <button id="stopTest" class="btn btn-secondary ml-3" onclick="stopTest()">Stop Test</button>
@@ -72,14 +72,15 @@
 
     <div class="mt-4">
         <form method="get" action="/restapi_test">
-            <select name="sitename_filter" id="siteDropdown">
+            <select name="sitename_filter" id="siteDropdown" style="width: 50%; height: 40px; padding: 8px 12px; font-size: 18px; margin-right:5px; vertical-align: middle;">
                 {% for name in all_sitenames %}
                 <option value="{{ name }}" {% if name == request.args.get('sitename_filter') %} selected{% endif %}>{{ name }}</option>
                 {% endfor %}
             </select>
-            <input type="submit" value="Test Rest API" class="btn btn-info">
+            <input type="submit" value="Single Rest API Test" class="btn btn-info" style="padding: 7px; vertical-align: middle;">
         </form>
     </div>
+
 
 {% if message %}
     <div class="container mt-3">

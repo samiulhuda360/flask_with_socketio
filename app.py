@@ -368,31 +368,38 @@ def apitest():
 
             site_url, username, app_password = site
             content = "This is a test post from the API."
-            time.sleep(randrange(5, 10))
-            success = test_post_to_wordpress(site_url, username, app_password, content)
+            time.sleep(randrange(5, 10))  # Simulate a delay
 
-            if not success:
-                # Read the current file, append new data, and save it again
+            try:
+                success = test_post_to_wordpress(site_url, username, app_password, content)
+                print(success.status_code)
+                if success.status_code == 201:
+                    # Assuming success is a response object
+                    post_id = success.json().get('id')
+                    delete_response = delete_from_wordpress(site_url, username, app_password, post_id)
+                    if delete_response and delete_response.status_code == 200:
+                        print(f"Post deleted successfully from {site_url}.")
+                        message = f"Post published successfully to {site_url}."
+                    else:
+                        print(f"Failed to delete post from {site_url}.")
+                        raise Exception("Failed to delete post")
+                else:
+                    raise Exception("Failed to publish post")
+            except Exception as e:
+                # Handle any kind of exception, log to Excel
+                print(f"Exception for {site_url}: {str(e)}")
                 existing_df = pd.read_excel(failed_sites_excel_path)
                 new_df = pd.DataFrame([[site_url]], columns=['Failed Site URL'])
                 updated_df = pd.concat([existing_df, new_df], ignore_index=True)
                 updated_df.to_excel(failed_sites_excel_path, index=False)
-
                 message = f"Failed to publish post to {site_url}."
-            else:
-                message = f"Post published successfully to {site_url}."
-                post_id = success.json().get('id')
-                delete_response = delete_from_wordpress(site_url, username, app_password, post_id)
-                if delete_response and delete_response.status_code == 200:
-                    print(f"Post deleted successfully from {site_url}.")
-                else:
-                    print(f"Failed to delete post from {site_url}.")
 
+            # Update via socketio
             socketio.emit('apitest_update', {'message': message})
 
+    # Completion message
     socketio.emit('apitest_complete', {'message': "API Test completed"})
     return jsonify({"message": "API Test completed"}), 200
-
 
 
 
