@@ -359,22 +359,19 @@ def apitest():
     # Initialize a new blank Excel file
     if os.path.exists(failed_sites_excel_path):
         os.remove(failed_sites_excel_path)
-    pd.DataFrame(columns=['Failed Site URL']).to_excel(failed_sites_excel_path, index=False)
+    pd.DataFrame(columns=['Failed Site URL', 'Error Code']).to_excel(failed_sites_excel_path, index=False)
 
     if site_details:
         for site in site_details:
             if not test_running:
                 break  # Stop the testing if the global variable is False
-
             site_url, username, app_password = site
             content = "This is a test post from the API."
             time.sleep(randrange(5, 10))  # Simulate a delay
-
             try:
                 success = test_post_to_wordpress(site_url, username, app_password, content)
                 print(success.status_code)
-                if success.status_code == 201:
-                    # Assuming success is a response object
+                if success.status_code == 201:  # Assuming success is a response object
                     post_id = success.json().get('id')
                     delete_response = delete_from_wordpress(site_url, username, app_password, post_id)
                     if delete_response and delete_response.status_code == 200:
@@ -384,12 +381,13 @@ def apitest():
                         print(f"Failed to delete post from {site_url}.")
                         raise Exception("Failed to delete post")
                 else:
-                    raise Exception("Failed to publish post")
+                    raise Exception(f"Failed to publish post. Status code: {success.status_code}")
             except Exception as e:
                 # Handle any kind of exception, log to Excel
                 print(f"Exception for {site_url}: {str(e)}")
+                error_code = str(e).split(":")[-1].strip() if "Status code" in str(e) else "N/A"
                 existing_df = pd.read_excel(failed_sites_excel_path)
-                new_df = pd.DataFrame([[site_url]], columns=['Failed Site URL'])
+                new_df = pd.DataFrame([[site_url, error_code]], columns=['Failed Site URL', 'Error Code'])
                 updated_df = pd.concat([existing_df, new_df], ignore_index=True)
                 updated_df.to_excel(failed_sites_excel_path, index=False)
                 message = f"Failed to publish post to {site_url}."
