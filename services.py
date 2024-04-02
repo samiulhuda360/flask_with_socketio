@@ -128,27 +128,7 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     second_body = openAI_output(
         f"Create 1-2 paragraphs with a maximum of 1-2 H2 headings (No introduction). The introduction of the article is  this:, '{intro_body}' already written. Use the {h2_heading} tags for the heading. Also, ensure to follow the {paragraph_template} instructions for the paragraph."
     )
-    #
-    # h2_heading_tags = "<h2></h2>"  # Template for H2 headings
-    # link_tag_template = "<a href='{url}' rel='dofollow'>{anchor_text}</a>"  # Template for link tag
-    # paragraph_instructions = "Include the link tag only once within one of the paragraphs."
-    #
-    #
-    # # Format the link tag with the provided URL and anchor text
-    # link_tag = link_tag_template.format(url=linking_url, anchor_text=anchor)
-    #
-    # # Prompt for generating HTML content
-    # prompt = f"""
-    # Create HTML content with the following structure:
-    # 1. content: Include 1-2 paragraphs with a maximum of 1-2 H2 headings. Use the {h2_heading_tags} tags for the headings. Follow these instructions for the paragraph content: {paragraph_instructions}.
-    # 2. Link Tag to Include: {link_tag}
-    #
-    # Ensure the link tag is used only once within the paragraphs. Don't use title(H1) for the content.
-    # """
-    #
-    # second_body = openAI_output(prompt)
-    #
-    # print(link_tag)
+
     try:
         second_body_formated = ((second_body).replace("nofollow", "dofollow")).replace("noopener", "dofollow")
     except:
@@ -217,9 +197,19 @@ def create_post_content(anchor, topic, linking_url, image_data, embed_code, map_
     return content
 
 
-def post_article(target_url, headers, query, content, post_id, USE_IMAGES):
-    title = openAI_output(f"Write an SEO optimized title for a simple article the TOPIC: {query}. Title should not "
-                          f"excess 50-55 characters")
+def post_article(target_url, headers, topic, content, post_id, USE_IMAGES):
+    prompts = [
+        f"Write an SEO title for a {topic} guide, include 'tips', max 55 chars",
+        f"Create an SEO title for a {topic} tutorial with 'how-to', under 50 chars",
+        f"Craft an SEO headline for a {topic} article, use 'best', up to 55 chars",
+        f"Generate an SEO title for a {topic} piece, include 'guide', max 50 chars",
+        f"Produce an SEO title for a {topic} post with 'easy', 55 chars or less"
+    ]
+    
+    title = openAI_output(random.choice(prompts))
+    
+    # title = openAI_output(f"Write an SEO optimized title for a simple article the TOPIC: {topic}. Title should not "
+    #                       f"excess 50-55 characters")
 
     def custom_title(s):
         try:
