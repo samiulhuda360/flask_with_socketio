@@ -456,7 +456,6 @@ def find_post_id_by_url(domain_name, post_url, username, app_password):
             'page': page
         }
         response = requests.get(base_url, auth=HTTPBasicAuth(username, app_password), params=params)
-        print(username)
         # If a 400 status code is received, stop the search
         if response.status_code == 400:
             print("Reached end of posts or encountered an error.")
