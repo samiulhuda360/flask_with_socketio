@@ -2,7 +2,7 @@ import os
 import time
 import csv
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for, send_from_directory
-from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress)
+from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress, find_post_id_by_url)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
@@ -16,6 +16,7 @@ import glob
 from operator import itemgetter
 from dotenv import load_dotenv
 from random import randrange
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -698,7 +699,60 @@ def download_excel_template():
         return send_file(excel_template_file_path, as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+    
+@app.route('/post_delete', methods=['GET', 'POST'])
+def post_delete():
+    if request.method == 'POST':
+        urls = request.form['urls'].split('\n')
+        result = []
+
+        conn = sqlite3.connect('sites_data.db')
+        cursor = conn.cursor()
+
+        for url in urls:
+            try:
+                # Parse the URL to extract the domain
+                parsed_url = urlparse(url)
+                domain = parsed_url.netloc
+                print(f"Extracted domain: {domain}")  # Logging statement
+
+                if domain:
+                    # Query the sites_data database to get the site details
+                    cursor.execute('SELECT * FROM sites WHERE sitename = ?', (domain,))
+                    site = cursor.fetchone()
+
+                    if site:
+                        site_id, sitename, username, app_password = site
+                        print(f"Retrieved site details: {sitename}, {username}, {app_password}")  # Logging statement
+
+                        # Find the post ID using the find_post_id_by_url function
+                        post_id = find_post_id_by_url(sitename, url, username, app_password)
+                        print(f"Found Post ID: {post_id}")  # Logging statement
+
+                        if post_id:
+                            # Delete the post using the delete_from_wordpress function
+                            response = delete_from_wordpress(sitename, username, app_password, post_id)
+                            if response is not None and response.status_code == 200:
+                                result.append(f"Post deleted successfully: {url}")
+                            else:
+                                result.append(f"Failed to delete post: {url}")
+                        else:
+                            result.append(f"Post not found for URL: {url}")
+                    else:
+                        result.append(f"Site not found for URL: {url}")
+                else:
+                    result.append(f"Invalid URL: {url}")
+            except Exception as e:
+                result.append(f"Error processing URL: {url} - {str(e)}")
+
+        conn.close()
+
+        return render_template('post_delete.html', result="\n".join(result))
+    return render_template('post_delete.html')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
+
+
 

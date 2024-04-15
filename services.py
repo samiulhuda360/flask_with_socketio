@@ -10,6 +10,7 @@ from config import Pexels_API_ENDPOINT
 from random import randrange
 import random
 from urllib.parse import urlparse
+from requests.auth import HTTPBasicAuth
 
 
 # Image Operations
@@ -438,9 +439,40 @@ def delete_from_wordpress(site_url, username, app_password, post_id):
     credentials = username + ':' + app_password
     token = base64.b64encode(credentials.encode())
     headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
-
     try:
         response = requests.delete(url_json, headers=headers)
         return response
     except requests.exceptions.ConnectionError:
         return None  # Or return an appropriate response indicating a connection error
+    
+
+def find_post_id_by_url(domain_name, post_url, username, app_password):
+    base_url = f"https://{domain_name}/wp-json/wp/v2/posts"
+    per_page = 100
+    page = 1
+    while True:
+        params = {
+            'per_page': per_page,
+            'page': page
+        }
+        response = requests.get(base_url, auth=HTTPBasicAuth(username, app_password), params=params)
+        print(username)
+        # If a 400 status code is received, stop the search
+        if response.status_code == 400:
+            print("Reached end of posts or encountered an error.")
+            break
+        # Check for successful response
+        if response.status_code == 200:
+            data = response.json()
+            if not data:
+                # Empty list means no more posts available
+                break
+            # Find the post ID
+            for post in data:
+                if post['link'] == post_url:
+                    return post['id']  # Return the found post ID
+            page += 1  # Increment page number to fetch the next set of posts
+        else:
+            print(f"Error fetching posts: {response.status_code}")
+            break
+    return None  # Return None if post not found or if there was an error
