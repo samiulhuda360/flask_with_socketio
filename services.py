@@ -423,7 +423,7 @@ proxies = {
 
 
 # Function to post content to WordPress site
-def test_post_to_wordpress(site_url, username, app_password, content, proxies=None):
+def test_post_to_wordpress(site_url, username, app_password, content):
     url_json = "https://" + site_url + "/wp-json/wp/v2/posts"
     credentials = username + ':' + app_password
     token = base64.b64encode(credentials.encode())
@@ -440,7 +440,7 @@ def test_post_to_wordpress(site_url, username, app_password, content, proxies=No
     except requests.exceptions.ConnectionError:
         return None  # Or return an appropriate response indicating a connection error
 
-def delete_from_wordpress(site_url, username, app_password, post_id, proxies=None):
+def delete_from_wordpress(site_url, username, app_password, post_id):
     url_json = "https://" + site_url + f"/wp-json/wp/v2/posts/{post_id}"
     credentials = username + ':' + app_password
     token = base64.b64encode(credentials.encode())
