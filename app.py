@@ -18,8 +18,13 @@ from operator import itemgetter
 from dotenv import load_dotenv
 from random import randrange
 from urllib.parse import urlparse
+import requests
 
 load_dotenv()
+
+# Retrieve API key from environment variable
+api_key = os.getenv("WEBSHARE_API_KEY")
+print(api_key)
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
@@ -36,6 +41,8 @@ SKIP_COM_AU = False
 ONLY_COM_AU = False
 NO_BODY_IMAGE = False
 SKIP_USED_DOMAINS = False
+
+
 
 
 
@@ -308,6 +315,37 @@ def site_manager():
     return render_template('site_manager.html', filtered_sites=sites_data, all_sitenames=all_sitenames)
 
 
+
+proxies = {
+     "http": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/",
+     "https": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/"
+}
+
+
+# Function to fetch proxy details from Webshare
+def fetch_proxies(api_key, page=1, page_size=10):
+    url = f"https://proxy.webshare.io/api/v2/proxy/list/?page={page}&page_size={page_size}"
+    headers = {"Authorization": f"Token {api_key}"}
+    
+    try:
+        response = requests.get(url, headers=headers)
+        print("Status Code:", response.status_code)
+        print("Response Text:", response.text)  # Print the response content for debugging
+        response.raise_for_status()
+        
+        proxies_data = response.json().get('results', [])
+        if proxies_data:
+            first_proxy = proxies_data[0]  # Use the first proxy for simplicity
+            return {
+                "http": f"http://{first_proxy['username']}:{first_proxy['password']}@{first_proxy['proxy_address']}:{first_proxy['port']}",
+                "https": f"http://{first_proxy['username']}:{first_proxy['password']}@{first_proxy['proxy_address']}:{first_proxy['port']}"
+            }
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching proxies: {e}")
+    
+    return None
+
+
 @app.route('/restapi_test')
 def test_page():
     sitename_filter = request.args.get('sitename_filter', None)
@@ -322,6 +360,7 @@ def test_page():
         site = cursor.fetchone()
 
         if site:
+            # Fetch proxy details from Webshare
             site_id, sitename, username, app_password = site
             response = test_post_to_wordpress(sitename, username, app_password, "This is a test post from the API.")
 
