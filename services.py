@@ -416,6 +416,12 @@ def fetch_site_details():
         if conn:
             conn.close()
 
+proxies = {
+     "http": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/",
+     "https": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/"
+}
+
+
 # Function to post content to WordPress site
 def test_post_to_wordpress(site_url, username, app_password, content, proxies=None):
     url_json = "https://" + site_url + "/wp-json/wp/v2/posts"

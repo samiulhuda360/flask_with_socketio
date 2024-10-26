@@ -322,29 +322,6 @@ proxies = {
 }
 
 
-# Function to fetch proxy details from Webshare
-def fetch_proxies(api_key, page=1, page_size=10):
-    url = f"https://proxy.webshare.io/api/v2/proxy/list/?page={page}&page_size={page_size}"
-    headers = {"Authorization": f"Token {api_key}"}
-    
-    try:
-        response = requests.get(url, headers=headers)
-        print("Status Code:", response.status_code)
-        print("Response Text:", response.text)  # Print the response content for debugging
-        response.raise_for_status()
-        
-        proxies_data = response.json().get('results', [])
-        if proxies_data:
-            first_proxy = proxies_data[0]  # Use the first proxy for simplicity
-            return {
-                "http": f"http://{first_proxy['username']}:{first_proxy['password']}@{first_proxy['proxy_address']}:{first_proxy['port']}",
-                "https": f"http://{first_proxy['username']}:{first_proxy['password']}@{first_proxy['proxy_address']}:{first_proxy['port']}"
-            }
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching proxies: {e}")
-    
-    return None
-
 
 @app.route('/restapi_test')
 def test_page():
