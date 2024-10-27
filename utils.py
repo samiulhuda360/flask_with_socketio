@@ -1,6 +1,7 @@
-import openai
-from retrying import retry
+from openai import OpenAI
 import sqlite3
+from tenacity import retry, wait_random_exponential, stop_after_attempt
+import os
 
 
 def setup_database():
@@ -20,9 +21,9 @@ def setup_database():
     con.close()
 
 
-def get_api_keys():
+def get_openai_api_keys():
     try:
-        setup_database()  # Set up the database before attempting to fetch keys
+        setup_database()
 
         con = sqlite3.connect('api_config.db')
         cur = con.cursor()
@@ -34,37 +35,41 @@ def get_api_keys():
     except sqlite3.OperationalError:
         return None
 
-api_keys = get_api_keys()
+api_keys = get_openai_api_keys()
 
 if api_keys:
-    openai.api_key = api_keys["openai_api"]
+    openai_api_key = api_keys["openai_api"]
     Pexels_API_KEY = api_keys["pexels_api"]
     # print("OpenAI API Key:", openai.api_key)
     # print("Pexels API Key:", Pexels_API_KEY)
 else:
-    openai.api_key = ""
+    openai_api_key = ""
     Pexels_API_KEY = ""
     print("API keys not found in the database.")
-openaii = openai.api_key
 
 def retry_if_exception(exception):
     """Return True if we should retry (in this case when there's an Exception), False otherwise"""
     return isinstance(exception, Exception)
 
-@retry(retry_on_exception=retry_if_exception, stop_max_attempt_number=7)
-def openAI_output(self):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user",
-                 "content": self },
-            ],
-            frequency_penalty=0.2,
-            presence_penalty=0.2
-        )
-        output = response.choices[0]["message"]["content"].strip()
-        return output
-    except Exception as e:
-        print("An error occurred. Retrying...")
-        raise e
+@retry(wait=wait_random_exponential(min=30, max=150), stop=stop_after_attempt(6))
+def openAI_output(prompt):
+    os.environ['OPENAI_API_KEY'] = openai_api_key
+    # Create an instance of the OpenAI client
+    client = OpenAI()
+    
+    # Format the messages for the chat completion
+    messages = [{"role": "user", "content": prompt}]  # Add the prompt as a user message
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",  # Keep the specified model name
+        messages=messages,
+        temperature=1,
+        max_tokens=1500,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    
+    # Access the content correctly
+    content = response.choices[0].message.content
+    return content.strip()

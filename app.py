@@ -8,7 +8,7 @@ from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
 import openpyxl
-from utils import get_api_keys
+from utils import get_openai_api_keys
 import pandas as pd
 import sqlite3
 from werkzeug.utils import secure_filename
@@ -272,7 +272,7 @@ def config_manager():
         flash("API configuration updated successfully!", "success")
 
     # Fetch the keys to display
-    api_keys = get_api_keys() or {"openai_api": "", "pexels_api": ""}
+    api_keys = get_openai_api_keys() or {"openai_api": "", "pexels_api": ""}
     return render_template('configuration.html', openai_api=api_keys["openai_api"], pexels_api=api_keys["pexels_api"])
 
 

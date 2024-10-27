@@ -6,7 +6,6 @@ import base64
 import openpyxl
 import re
 import os
-from config import Pexels_API_ENDPOINT
 from random import randrange
 import random
 from urllib.parse import urlparse
@@ -27,7 +26,7 @@ def process_image(keyword, USE_IMAGES):
         "query": keyword
     }
 
-    response = requests.get(Pexels_API_ENDPOINT, headers=image_headers, params=params)
+    response = requests.get("https://api.pexels.com/v1/search", headers=image_headers, params=params)
 
 
     if response.status_code == 200:
