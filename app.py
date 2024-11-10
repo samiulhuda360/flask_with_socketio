@@ -279,21 +279,22 @@ def config_manager():
 @app.route('/site-manager', methods=['GET'])
 @login_required
 def site_manager():
-    sitename_filter = request.args.get('sitename_filter', None)  # Notice the default value is now None
+    sitename_filter = request.args.get('sitename_filter', None)
 
     conn = sqlite3.connect('sites_data.db')
     cursor = conn.cursor()
 
     sites_data = []
 
+    # If a filter is applied, fetch sites accordingly
     if sitename_filter:
         if sitename_filter == 'all':
             cursor.execute('SELECT * FROM sites')
         else:
             cursor.execute('SELECT * FROM sites WHERE sitename = ?', (sitename_filter,))
-
         sites = cursor.fetchall()
 
+        # Build sites_data based on the fetched sites
         for site in sites:
             site_id, sitename, username, app_password = site
             cursor.execute('SELECT url FROM links WHERE site_id = ?', (site_id,))
@@ -312,7 +313,16 @@ def site_manager():
 
     conn.close()
 
-    return render_template('site_manager.html', filtered_sites=sites_data, all_sitenames=all_sitenames)
+    # Pass a flag if no site names are available
+    no_sites = len(all_sitenames) == 0
+
+    return render_template(
+        'site_manager.html',
+        filtered_sites=sites_data,
+        all_sitenames=all_sitenames,
+        no_sites=no_sites
+    )
+
 
 
 

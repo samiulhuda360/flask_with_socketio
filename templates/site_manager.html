@@ -52,36 +52,73 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Modal to Add Site -->
-        <div class="modal fade" id="addSiteModal" tabindex="-1" aria-labelledby="addSiteModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addSiteModalLabel">Add New Site</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addSiteForm">
-                            <div class="mb-3">
-                                <label for="sitename" class="form-label">Site Name</label>
-                                <input type="text" class="form-control" id="sitename" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">App Password</label>
-                                <input type="text" class="form-control" id="app_password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Add</button>
-                        </form>
-                    </div>
+        <h2>Sites Data</h2>
+        {% if no_sites %}
+            <p class="text-warning">No sites available. Please add a new site using the "Add New Site" button above.</p>
+        {% else %}
+            <div class="row">
+                <!-- Left Form -->
+                <div class="col-md-6">
+                    <form method="get" action="/site-manager">
+                        <select name="sitename_filter" id="siteDropdown">
+                            <option value="all">View All</option>
+                            {% for name in all_sitenames %}
+                            <option value="{{ name }}" {% if name == request.args.get('sitename_filter') %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="submit" value="Check Site Info" class="btn btn-info">
+                        <button type="button" id="deleteButton" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+    
+                <!-- Right Form -->
+                <div class="col-md-6">
+                    <form action="/upload-excel" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="excel_data" class="mb-4">
+                        <br>
+                        <input type="submit" value="Upload Site Data" class="btn btn-primary">
+                        <a href="/download_excel_template" class="btn btn-success">Download Excel Template</a>
+                    </form>
+                    <a href="/download-excel-alldata" class="btn btn-secondary mt-4">Download Sites Data</a>
                 </div>
             </div>
-        </div>
+        {% endif %}
+    
+        <!-- Table for displaying sites data -->
+        {% if filtered_sites %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Website Name</th>
+                        <th>Username</th>
+                        <th>App Password</th>
+                        <th>Link List</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for site in filtered_sites %}
+                    <tr>
+                        <td>{{ site.site_id }}</td>
+                        <td>{{ site.sitename }}</td>
+                        <td>{{ site.username }}</td>
+                        <td>{{ site.app_password }}</td>
+                        <td>
+                            <ul>
+                                {% for link in site.links %}
+                                <li>{{ link }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No data available for the selected filter.</p>
+        {% endif %}
     </div>
-
+    
     <div class="container mt-4">
         <h2>Sites Data</h2>
         <div class="row">
