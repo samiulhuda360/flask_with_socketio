@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Socket.io connection
-    const socket = io.connect('http://' + document.domain + ':' + location.port, {
+    const socket = io.connect('https://' + document.domain + ':' + location.port, {
         'reconnection': true,
         'reconnectionDelay': 500,
         'reconnectionAttempts': 5
