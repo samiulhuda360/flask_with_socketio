@@ -27,7 +27,7 @@ api_key = os.getenv("WEBSHARE_API_KEY")
 print(api_key)
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"  # or "None" if necessary
@@ -734,10 +734,6 @@ def post_delete():
 
 @socketio.on('delete_request')
 def handle_delete_request(data):
-    print(f"Received delete request: {data}")
-    # Emit updates
-    socketio.emit('delete_update', {'message': 'Test delete update'})
-    socketio.emit('delete_complete', {'message': 'Delete operation completed'})
     urls = data['urls']
 
     conn = sqlite3.connect('sites_data.db')

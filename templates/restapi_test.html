@@ -114,11 +114,14 @@
 
 <script type="text/javascript">
     // Socket.io connection
-    const socket = io.connect('http://' + document.domain + ':' + location.port, {
-        'reconnection': true,
-        'reconnectionDelay': 500,
-        'reconnectionAttempts': 5
+    const protocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
+    const socket = io.connect(protocol + document.domain + ':' + location.port, {
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 500
     });
+
 
     let messageCount = 0;  // Initialize a counter for messages
 
