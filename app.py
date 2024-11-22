@@ -807,6 +807,3 @@ def download_excel_alldata():
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
-
-
-

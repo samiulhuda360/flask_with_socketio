@@ -97,8 +97,8 @@
     <script type="text/javascript">
         // Socket.io connection
         const socket = io.connect(window.location.protocol + '//' + document.domain + ':' + location.port, {
-            transports: ['websocket']
-        });
+            transports: ['websocket'],
+        });        
 
         console.log('Attempting to establish Socket.IO connection...');
 
