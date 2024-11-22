@@ -459,6 +459,7 @@ def upload_excel_site_data():
             cursor.execute('UPDATE sites SET username=?, app_password=? WHERE site_id=?',
                            (username, app_password, site_id[0]))
         else:  # if site doesn't exist
+            sitename = sitename.strip().lower() 
             cursor.execute('INSERT INTO sites (sitename, username, app_password) VALUES (?, ?, ?)',
                            (sitename, username, app_password))
             site_id = (cursor.lastrowid,)
