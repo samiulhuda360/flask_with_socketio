@@ -3,7 +3,7 @@ import time
 import csv
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for, send_from_directory
 from flask import stream_with_context, Response
-from services import (get_all_sitenames, get_url_data_from_db, save_matched_to_excel, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress, find_post_id_by_url)
+from services import (get_all_sitenames, get_url_data_from_db, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress, find_post_id_by_url)
 from flask_socketio import SocketIO, emit
 import json
 from functools import wraps
