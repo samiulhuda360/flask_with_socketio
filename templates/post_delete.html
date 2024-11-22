@@ -96,16 +96,12 @@
 
     <script type="text/javascript">
         // Socket.io connection
-        const socket = io.connect('http://' + document.domain + ':' + location.port, {
+        const socket = io.connect('https://' + document.domain + ':' + location.port, {
             'reconnection': true,
             'reconnectionDelay': 500,
             'reconnectionAttempts': 5
-        });
-        
+        });       
 
-        socket.on('connect_error', function(err) {
-            console.error('Socket.IO connection error:', err);
-        });
 
         let messageCount = 0;  // Initialize a counter for messages
 

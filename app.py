@@ -27,7 +27,7 @@ api_key = os.getenv("WEBSHARE_API_KEY")
 print(api_key)
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"  # or "None" if necessary
