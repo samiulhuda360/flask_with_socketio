@@ -734,6 +734,10 @@ def post_delete():
 
 @socketio.on('delete_request')
 def handle_delete_request(data):
+    print(f"Received delete request: {data}")
+    # Emit updates
+    socketio.emit('delete_update', {'message': 'Test delete update'})
+    socketio.emit('delete_complete', {'message': 'Delete operation completed'})
     urls = data['urls']
 
     conn = sqlite3.connect('sites_data.db')
