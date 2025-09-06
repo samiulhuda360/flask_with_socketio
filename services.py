@@ -417,11 +417,6 @@ def fetch_site_details():
         if conn:
             conn.close()
 
-proxies = {
-     "http": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/",
-     "https": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/"
-}
-
 
 # Function to post content to WordPress site
 def test_post_to_wordpress(site_url, username, app_password, content):
@@ -448,7 +443,7 @@ def delete_from_wordpress(site_url, username, app_password, post_id):
     token = base64.b64encode(credentials.encode())
     headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
     try:
-        response = requests.delete(url_json, headers=headers, proxies=proxies)
+        # response = requests.delete(url_json, headers=headers, proxies=proxies)
         response = requests.delete(url_json, headers=headers) # Without Proxies
         return response
     except requests.exceptions.ConnectionError:

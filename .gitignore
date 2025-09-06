@@ -171,3 +171,5 @@ failed_sites.xlsx
 random_site_testing.py
 reserved_files/
 sites_data.xlsx
+.env
+
