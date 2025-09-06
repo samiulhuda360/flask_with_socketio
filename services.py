@@ -245,7 +245,9 @@ def post_article(target_url, headers, topic, content, post_id, USE_IMAGES):
 
     try:
         print("Start Posting")
-        response = requests.post(target_url + '/posts', headers=headers, json=post_data, proxies=proxies)
+        # response = requests.post(target_url + '/posts', headers=headers, json=post_data, proxies=proxies)
+        response = requests.post(target_url + '/posts', headers=headers, json=post_data) # Without Proxies
+
         print(response.status_code)
         # Decode the bytes content to a string
         response_content_str = response.content.decode('utf-8')
@@ -434,7 +436,8 @@ def test_post_to_wordpress(site_url, username, app_password, content):
     }
 
     try:
-        response = requests.post(url_json, headers=headers, json=data, proxies=proxies)
+        # response = requests.post(url_json, headers=headers, json=data, proxies=proxies)
+        response = requests.post(url_json, headers=headers, json=data) # Without Proxies
         return response
     except requests.exceptions.ConnectionError:
         return None  # Or return an appropriate response indicating a connection error
@@ -446,6 +449,7 @@ def delete_from_wordpress(site_url, username, app_password, post_id):
     headers = {'Authorization': 'Basic ' + token.decode('utf-8')}
     try:
         response = requests.delete(url_json, headers=headers, proxies=proxies)
+        response = requests.delete(url_json, headers=headers) # Without Proxies
         return response
     except requests.exceptions.ConnectionError:
         return None  # Or return an appropriate response indicating a connection error
@@ -460,7 +464,8 @@ def find_post_id_by_url(domain_name, post_url, username, app_password):
             'per_page': per_page,
             'page': page
         }
-        response = requests.get(base_url, auth=HTTPBasicAuth(username, app_password), params=params, proxies=proxies)
+        # response = requests.get(base_url, auth=HTTPBasicAuth(username, app_password), params=params, proxies=proxies)
+        response = requests.get(base_url, auth=HTTPBasicAuth(username, app_password), params=params)
         # If a 400 status code is received, stop the search
         if response.status_code == 400:
             print("Reached end of posts or encountered an error.")

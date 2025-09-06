@@ -324,15 +324,6 @@ def site_manager():
     )
 
 
-
-
-proxies = {
-     "http": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/",
-     "https": "http://elxjiifi-rotate:pa23s9wa8992@p.webshare.io:80/"
-}
-
-
-
 @app.route('/restapi_test')
 def test_page():
     sitename_filter = request.args.get('sitename_filter', None)
