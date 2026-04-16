@@ -1,43 +1,96 @@
+/* ---------- Page shell ---------- */
+body {
+    background-color: #f4f6fa;
+    color: #2d3748;
+}
+
 .no-padding {
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
- .fake-scroll {
+
+.fake-scroll {
     overflow-x: auto;
     overflow-y: hidden;
     height: 40px;
-  }
- #fakeContent {
-    height: 1px;
-    height: 1px;
-  }
-
-.table th, .table td {
-  min-width: 50px;
-  max-width: 100px;
-  overflow: hidden;  /* or auto if you want to make it scrollable */
-  text-overflow: ellipsis;
 }
 
+#fakeContent {
+    height: 1px;
+}
+
+/* ---------- Headings ---------- */
+.page-header h2 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* ---------- Cards ---------- */
+.card {
+    border: 1px solid #e6e9f0;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+}
+
+.card-header h5 {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+/* ---------- Tables ---------- */
 .table {
-  table-layout: fixed;
+    margin-bottom: 0;
 }
+
+.table thead th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #4a5568;
+    border-bottom: 2px solid #e6e9f0;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.table td ul li {
+    word-break: break-all;
+}
+
+/* ---------- Form controls ---------- */
+.form-select, .form-control {
+    border-radius: 8px;
+}
+
 select.form-control {
-    appearance: auto;     /* For modern browsers */
-    -webkit-appearance: menulist;  /* For older Webkit browsers */
-    -moz-appearance: menulist;     /* For Firefox */
+    appearance: auto;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
     background-color: #fff;
     background-image: none;
     border: 1px solid #ced4da;
     color: #495057;
-    padding-right: 1rem;  /* Adjust as needed */
+    padding-right: 1rem;
 }
 
+/* ---------- Buttons ---------- */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* ---------- Alerts / flash ---------- */
 .alert {
-    padding: 10px;
-    border-radius: 5px;
+    padding: 12px 16px;
+    border-radius: 8px;
     margin: 10px 0;
-    text-align: center;
 }
 
 .alert-success {
@@ -52,3 +105,10 @@ select.form-control {
     border: 1px solid #f5c6cb;
 }
 
+/* ---------- Empty state ---------- */
+.empty-state {
+    padding: 40px 20px;
+    background-color: #fff;
+    border: 1px dashed #d1d9e6;
+    border-radius: 10px;
+}
