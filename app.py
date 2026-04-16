@@ -801,5 +801,28 @@ def download_excel_alldata():
     return send_file(excel_file, as_attachment=True)
 
 
+def export_sites_only_to_excel(db_name, excel_file):
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute('SELECT site_id, sitename, username, app_password FROM sites ORDER BY site_id')
+
+    wb = openpyxl.Workbook(write_only=True)
+    ws = wb.create_sheet('Sites')
+    ws.append(['ID', 'Website Name', 'Username', 'App Password'])
+    for row in cursor:
+        ws.append(row)
+
+    wb.save(excel_file)
+    cursor.close()
+    conn.close()
+
+
+@app.route('/download-excel-sites')
+def download_excel_sites():
+    excel_file = 'sites_list.xlsx'
+    export_sites_only_to_excel('sites_data.db', excel_file)
+    return send_file(excel_file, as_attachment=True)
+
+
 if __name__ == '__main__':
     socketio.run(app, debug=True)
