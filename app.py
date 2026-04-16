@@ -774,20 +774,24 @@ def handle_delete_request(data):
     socketio.emit('delete_complete', {'message': 'Delete operation completed.'})
 
 def export_to_excel(db_name, excel_file):
+    # Stream rows directly from SQLite into openpyxl in write-only mode
+    # so we never hold the full joined result set (120k+ rows) in memory.
     conn = sqlite3.connect(db_name)
-    query = '''
-    SELECT 
-        s.sitename, 
-        s.username, 
-        s.app_password, 
-        l.url
-    FROM sites s
-    LEFT JOIN links l ON s.site_id = l.site_id
-    '''
-    combined_df = pd.read_sql_query(query, conn)
-    combined_df.columns = ['Sitename', 'Username', 'Application_Password', 'Added_Link']
-    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
-        combined_df.to_excel(writer, sheet_name='Sites_Links', index=False)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.sitename, s.username, s.app_password, l.url
+        FROM sites s
+        LEFT JOIN links l ON s.site_id = l.site_id
+    ''')
+
+    wb = openpyxl.Workbook(write_only=True)
+    ws = wb.create_sheet('Sites_Links')
+    ws.append(['Sitename', 'Username', 'Application_Password', 'Added_Link'])
+    for row in cursor:
+        ws.append(row)
+
+    wb.save(excel_file)
+    cursor.close()
     conn.close()
 
 @app.route('/download-excel-alldata')
