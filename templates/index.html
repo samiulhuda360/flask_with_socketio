@@ -46,109 +46,127 @@
         </div>
 </nav>
 
-<div class="container">
+<div class="container pb-5">
 
-<form id="uploadForm" enctype="multipart/form-data" class="mb-4">
-    <div class="mb-3">
-        <label for="excel_file" class="form-label">Select an Excel file</label>
-        <input type="file" class="form-control mb-3" name="excel_file" id="excel_file">
+    <div class="page-header mb-4">
+        <h2 class="mb-1">Link Building Dashboard</h2>
+        <p class="text-muted mb-0">Upload data, configure options, and launch the link building process.</p>
     </div>
 
-    <div class="row">
-        <!-- Left Column for checkboxes -->
-        <div class="col-md-6">
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="use_images" id="use_images" value="True">
-                <label class="form-check-label" for="use_images">Use Images</label>
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="exact_match" id="exact_match" value="True">
-                <label class="form-check-label" for="exact_match">Avoid Exact Match Only</label>
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="no_body_image" id="no_body_image" value="True">
-                <label class="form-check-label" for="no_body_image">No Body Image</label>
-            </div>
+    <!-- Process Configuration Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">Process Configuration</h5>
         </div>
-
-        <!-- Right Column for the new checkboxes -->
-        <div class="col-md-6">
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="skip_au" id="skip_au" value="True">
-                <label class="form-check-label" for="skip_au">Skip .com.au and .org.au</label>
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="only_au" id="only_au" value="True">
-                <label class="form-check-label" for="only_au">Only .com.au and .org.au</label>
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" name="skip_used_domains" id="skip_used_domains" value="True">
-                <label class="form-check-label" for="skip_used_domains">All Unique Domains</label>
-            </div>
-        </div>
-    </div>
-
-    <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
-</form>
-
-<div class="row mt-2">
-    <!-- Group the first three buttons on the left -->
-    <div class="col-md-9">
-        <a href="/download_excel" class="btn btn-info mb-1">Download Current Link Report</a>
-        <a href="/failed_csv" download="failed_urls.csv" class="btn btn-info mb-1">Download Failed Sites List</a>
-    </div>
-
-        <!-- Dropdown for files -->
-
-    <div class="row">
-        <div class="col-md-6 mt-2">
-            <div class="row">
-                <div class="col-md-7 pr-md-1">
-                    <select id="fileDropdown" class="form-control">
-                        <option value="">Select a report to download</option>
-                    </select>
+        <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="excel_file" class="form-label text-muted small">Select an Excel file</label>
+                    <input type="file" class="form-control" name="excel_file" id="excel_file">
                 </div>
-                <div class="col-md-2 pl-md-1">
-                    <button onclick="downloadFile()" class="btn btn-info mb-1 w-115">Download</button>
-                </div>
-                    <div class="col-md-3 pl-md-1">
-                        <button onclick="deleteAllExcelFiles()" class="btn btn-danger mb-1 w-100">Delete All Files</button>
+
+                <div class="row">
+                    <!-- Left Column for checkboxes -->
+                    <div class="col-md-6">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="use_images" id="use_images" value="True">
+                            <label class="form-check-label" for="use_images">Use Images</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="exact_match" id="exact_match" value="True">
+                            <label class="form-check-label" for="exact_match">Avoid Exact Match Only</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="no_body_image" id="no_body_image" value="True">
+                            <label class="form-check-label" for="no_body_image">No Body Image</label>
+                        </div>
                     </div>
 
+                    <!-- Right Column for the new checkboxes -->
+                    <div class="col-md-6">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="skip_au" id="skip_au" value="True">
+                            <label class="form-check-label" for="skip_au">Skip .com.au and .org.au</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="only_au" id="only_au" value="True">
+                            <label class="form-check-label" for="only_au">Only .com.au and .org.au</label>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="skip_used_domains" id="skip_used_domains" value="True">
+                            <label class="form-check-label" for="skip_used_domains">All Unique Domains</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="startProcess" class="btn btn-primary">Start Process</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reports & Actions Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">Reports &amp; Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="/download_excel" class="btn btn-info">Download Current Link Report</a>
+                        <a href="/failed_csv" download="failed_urls.csv" class="btn btn-info">Download Failed Sites List</a>
+                    </div>
+
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <select id="fileDropdown" class="form-select">
+                                <option value="">Select a report to download</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="downloadFile()" class="btn btn-info">Download</button>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="deleteAllExcelFiles()" class="btn btn-danger">Delete All Files</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button onclick="stopProcessing()" class="btn btn-danger">Stop The Process</button>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-6 mt-2 d-flex align-items-center justify-content-end">
-            <!-- align-items-center ensures the button vertically centers if the left side gets taller -->
-            <button onclick="stopProcessing()" class="btn btn-danger mb-1">Stop The Process</button>
+    <!-- Link Building Update Table Card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Link Building Update</h5>
+            <div id="progressContainer" class="text-center" style="display: block;">
+                <!-- The spinner and text will be inserted here by the script -->
+            </div>
+        </div>
+        <div id="fakeScroll" class="fake-scroll">
+            <div id="fakeContent"></div>
+        </div>
+        <div id="tableContainer" class="table-responsive">
+            <table id="dataTable" class="table table-striped table-hover align-middle mb-0">
+                 <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>ANCHOR</th>
+                            <th>LINKING URL</th>
+                            <th>TOPIC</th>
+                            <th>LIVE URL</th>
+                            <th>ROOT DOMAIN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Table rows will be added here dynamically -->
+                    </tbody>
+            </table>
         </div>
     </div>
-</div>
-
-
-    <h2 class="text-center">Link Building Update</h2>
-    <div id="progressContainer" class="text-center" style="display: block;">
-    <!-- The spinner and text will be inserted here by the script -->
-    </div>
-<div id="fakeScroll" class="fake-scroll">
-    <div id="fakeContent"></div>
-</div>
-<div id="tableContainer" class="table-responsive">
-    <table id="dataTable" class="table table-info table-bordered">
-         <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Anchor</th>
-                    <th>Linking URL</th>
-                    <th>Topic</th>
-                    <th>Live URL</th>
-                    <th>Root Domain</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Table rows will be added here dynamically -->
-            </tbody>
-    </table>
 </div>
 <!--<div id="confirmationMessage" class="alert alert-info mt-4" role="alert" style="display:none;">-->
 <!--        &lt;!&ndash; Confirmation messages will be shown here &ndash;&gt;-->

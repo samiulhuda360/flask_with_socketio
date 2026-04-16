@@ -112,3 +112,26 @@ select.form-control {
     border: 1px dashed #d1d9e6;
     border-radius: 10px;
 }
+
+/* ---------- Result messages (API test / delete) ---------- */
+.result-message {
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.result-message.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.result-message.failure {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* ---------- Login page ---------- */
+body.bg-light {
+    background-color: #f4f6fa !important;
+}

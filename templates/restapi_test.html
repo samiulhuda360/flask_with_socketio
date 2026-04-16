@@ -10,22 +10,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
 
-    <style>
-        .result-message {
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .failure {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
-
 </head>
 <body class="container-fluid no-padding">
         <!-- Navbar with Home, Site Data and Logout -->
@@ -62,37 +46,62 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-5">
-        <h2>WordPress RestAPI Test Page</h2>
-        <div class="mt-5">
-        <button id="startTest" class="btn btn-primary">Start Full Test</button>
-        <!-- Download button for the Excel file -->
-        <a href="/download_failed_sites" class="btn btn-info" id="downloadFailedSites">Download Failed Sites</a>
-        <button id="stopTest" class="btn btn-secondary ml-3" onclick="stopTest()">Stop Test</button>
+
+    <div class="container mt-4 pb-5">
+        <div class="page-header mb-4">
+            <h2 class="mb-1">WordPress REST API Test</h2>
+            <p class="text-muted mb-0">Run API tests across all sites or target a single site.</p>
         </div>
 
-    <div class="mt-4">
-        <form method="get" action="/restapi_test">
-            <select name="sitename_filter" id="siteDropdown" style="width: 50%; height: 40px; padding: 8px 12px; font-size: 18px; margin-right:5px; vertical-align: middle;">
-                {% for name in all_sitenames %}
-                <option value="{{ name }}" {% if name == request.args.get('sitename_filter') %} selected{% endif %}>{{ name }}</option>
-                {% endfor %}
-            </select>
-            <input type="submit" value="Single Rest API Test" class="btn btn-info" style="padding: 7px; vertical-align: middle;">
-        </form>
-    </div>
+        <!-- Test Controls Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Test Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button id="startTest" class="btn btn-primary">Start Full Test</button>
+                            <a href="/download_failed_sites" class="btn btn-info" id="downloadFailedSites">Download Failed Sites</a>
+                            <button id="stopTest" class="btn btn-secondary" onclick="stopTest()">Stop Test</button>
+                        </div>
 
+                        <form method="get" action="/restapi_test">
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <select name="sitename_filter" id="siteDropdown" class="form-select" style="max-width: 350px;">
+                                    {% for name in all_sitenames %}
+                                    <option value="{{ name }}" {% if name == request.args.get('sitename_filter') %} selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="submit" value="Single Rest API Test" class="btn btn-info">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-{% if message %}
-    <div class="container mt-3">
-        <div class="{{ 'alert-success' if 'successfully' in message else 'alert-danger' }} alert">
-            {{ message }}
+        {% if message %}
+            <div class="{{ 'alert-success' if 'successfully' in message else 'alert-danger' }} alert">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <!-- Results Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Test Results</h5>
+            </div>
+            <div class="card-body">
+                <div id="results"></div>
+                <div id="results-empty" class="empty-state text-center">
+                    <p class="text-muted mb-0">Run a test to see results here.</p>
+                </div>
+            </div>
         </div>
     </div>
-{% endif %}
 
-        <div id="results" class="mt-3"></div>
-    </div>
      <!-- Modal -->
     <div class="modal fade" id="testCompleteModal" tabindex="-1" aria-labelledby="testCompleteModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -127,6 +136,7 @@
 
     socket.on('apitest_update', function(data) {
         messageCount++;  // Increment the counter
+        document.getElementById('results-empty').style.display = 'none';
         var messageType = data.message.includes("successfully") ? 'success' : 'failure';
         $('#results').append('<div class="result-message ' + messageType + '"><strong>' + messageCount + '.</strong> ' + data.message + '</div>');
     });
@@ -143,6 +153,7 @@
         $('#startTest').click(function() {
             // Clear previous results and reset message count
             $('#results').html('');
+            document.getElementById('results-empty').style.display = 'none';
             messageCount = 0;
 
             // Trigger the API test

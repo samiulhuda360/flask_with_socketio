@@ -10,22 +10,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
 
-
-    <style>
-        .result-message {
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .failure {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
 </head>
 
 <body class="container-fluid no-padding">
@@ -63,18 +47,41 @@
         </div>
     </nav>
 
-   <div class="container mt-5">
-        <h2>Delete Posts</h2>
-        <form method="post" id="delete-form">
-            <div class="mb-3">
-                <label for="urls" class="form-label">Enter URLs (one per line):</label>
-                <textarea class="form-control" id="urls" name="urls" rows="5" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-danger">Delete Posts</button>
-        </form>
-    </div>
+    <div class="container mt-4 pb-5">
+        <div class="page-header mb-4">
+            <h2 class="mb-1">Delete Posts</h2>
+            <p class="text-muted mb-0">Remove published posts by URL from WordPress sites.</p>
+        </div>
 
-    <div id="results" class="container mt-3"></div>
+        <!-- Delete Form Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Submit URLs for Deletion</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="delete-form">
+                    <div class="mb-3">
+                        <label for="urls" class="form-label text-muted small">Enter URLs (one per line)</label>
+                        <textarea class="form-control" id="urls" name="urls" rows="5" required placeholder="https://example.com/post-slug&#10;https://another-site.com/article"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Delete Posts</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">Deletion Results</h5>
+            </div>
+            <div class="card-body">
+                <div id="results"></div>
+                <div id="results-empty" class="empty-state text-center">
+                    <p class="text-muted mb-0">Submit URLs above to see deletion results here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal -->
     <div class="modal fade" id="testCompleteModal" tabindex="-1" aria-labelledby="testCompleteModalLabel" aria-hidden="true">
@@ -109,6 +116,7 @@
 
         socket.on('delete_update', function(data) {
             messageCount++;  // Increment the counter
+            document.getElementById('results-empty').style.display = 'none';
             var messageType = data.message.includes("successfully") ? 'success' : 'failure';
 
             // Try using vanilla JavaScript instead of jQuery
