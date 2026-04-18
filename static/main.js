@@ -73,10 +73,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // Stop Processing Button
 function stopProcessing() {
+    if (!confirm("Stop the current process and reset the interface?")) return;
     fetch('/stop_processing', { method: 'POST' })
         .then(response => response.json())
-        .then(data => alert(data.message))
-        .catch(error => console.error('Error:', error));
+        .then(() => window.location.reload())
+        .catch(error => {
+            console.error('Error:', error);
+            window.location.reload();
+        });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -165,6 +169,12 @@ document.addEventListener("DOMContentLoaded", function() {
         updateProgressBar(data.current || 0, data.total || 0);
     });
 
+    socket.on('progress_reset', function() {
+        document.getElementById("progressBarWrapper").style.display = "none";
+        const tbody = document.querySelector('#dataTable tbody');
+        if (tbody) tbody.innerHTML = '';
+    });
+
     // Restore progress bar after page refresh
     socket.on('progress_state', function(data) {
         if (!data || data.total === 0) return;
@@ -193,9 +203,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (data.message === "Processing Ended") {
                 alert("Job Processing is complete!");
-            }
-            else if (data.message === "Process stopped") {
-                alert("Job Cancelled By User!");
             }
         }
 

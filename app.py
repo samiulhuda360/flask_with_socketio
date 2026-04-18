@@ -517,7 +517,9 @@ def update_excel_with_live_link(file_path, row_index, live_url):
 def stop_processing():
     global should_continue_processing
     should_continue_processing = False
-    return jsonify({"message": "Processing will be stopped."}), 200
+    progress_state.update({'active': False, 'current': 0, 'total': 0, 'status': 'idle'})
+    socketio.emit('progress_reset')
+    return jsonify({"message": "Processing stopped."}), 200
 
 
 @app.route('/start_emit', methods=['POST'])
@@ -732,8 +734,7 @@ def start_emit():
 
         if not should_continue_processing:
             print("Process stopped")
-            flash("Process stopped")
-            progress_state.update({'active': False, 'status': 'stopped'})
+            progress_state.update({'active': False, 'current': 0, 'total': 0, 'status': 'idle'})
             snapshot_report(file_path)
             socketio.emit('update', {"message": "Process stopped"})
             return jsonify({"message": "Processing was halted by the user."}), 200
