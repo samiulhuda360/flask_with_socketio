@@ -609,6 +609,8 @@ def start_emit():
 
 
             for offset in range(num_sites):
+                if not should_continue_processing:
+                    break
                 site_index = (start_site_index + offset) % num_sites  # Wrap around using modulo.
                 host_url = sitenames[site_index].strip()
                 print("Posting to:", host_url)
@@ -651,21 +653,12 @@ def start_emit():
 
 
 
-                if not should_continue_processing:
-                    break
-
-
                 user_password_data = get_url_data_from_db(host_url)
                 site_json = "https://" + host_url + "/wp-json/wp/v2"
 
                 if user_password_data:
                     user = user_password_data.get('user')
                     password = user_password_data.get('password')
-
-                    # for _ in range(5):
-                    #     asyncio.run(my_async_function())
-                    if not should_continue_processing:
-                        break
 
                     # Testing START
 
@@ -723,6 +716,9 @@ def start_emit():
 
                     link_posted = True
                     break
+
+            if not should_continue_processing:
+                break
 
             if not link_posted:
                 print("All Sites have this link")
