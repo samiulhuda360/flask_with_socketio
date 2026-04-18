@@ -159,6 +159,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     socket.on('progress_init', function(data) {
+        const tbody = document.querySelector('#dataTable tbody');
+        if (tbody) tbody.innerHTML = '';
         showProgressBar();
         updateProgressBar(0, data.total || 0);
         document.getElementById("progressLabel").innerText =
