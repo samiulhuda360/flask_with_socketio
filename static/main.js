@@ -166,6 +166,20 @@ document.addEventListener("DOMContentLoaded", function() {
         updateProgressBar(data.current || 0, data.total || 0);
     });
 
+    // Restore progress bar after page refresh
+    socket.on('progress_state', function(data) {
+        if (!data || data.total === 0) return;
+        if (data.active || data.status === 'complete' || data.status === 'stopped') {
+            showProgressBar();
+            updateProgressBar(data.current || 0, data.total || 0);
+            if (data.status === 'stopped') {
+                document.getElementById("progressLabel").innerText = "Stopped";
+            } else if (data.status === 'error') {
+                document.getElementById("progressLabel").innerText = "Error occurred";
+            }
+        }
+    });
+
     socket.on('update', function(data) {
         if (data.data) {
             createAndAppendTableRows(JSON.parse(data.data));

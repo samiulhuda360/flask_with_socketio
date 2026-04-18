@@ -42,6 +42,13 @@ ONLY_COM_AU = False
 NO_BODY_IMAGE = False
 SKIP_USED_DOMAINS = False
 
+progress_state = {
+    'active': False,
+    'current': 0,
+    'total': 0,
+    'status': 'idle',
+}
+
 
 
 
@@ -533,6 +540,12 @@ def start_emit():
         if r[1] is not None and r[2] is not None and (r[9] is None or r[9] == "Failed To Post")
     )
     processed_count = 0
+    progress_state.update({
+        'active': True,
+        'current': 0,
+        'total': total_to_process,
+        'status': 'running',
+    })
     socketio.emit('progress_init', {'total': total_to_process})
 
     last_used_site_index = -1  # Start with -1 so that for the first row, it starts with 0.
@@ -687,6 +700,7 @@ def start_emit():
                 pass
 
             processed_count += 1
+            progress_state['current'] = processed_count
             socketio.emit('progress_tick', {'current': processed_count, 'total': total_to_process})
 
             row_index += 1
@@ -694,17 +708,25 @@ def start_emit():
         if not should_continue_processing:
             print("Process stopped")
             flash("Process stopped")
+            progress_state.update({'active': False, 'status': 'stopped'})
             socketio.emit('update', {"message": "Process stopped"})
             return jsonify({"message": "Processing was halted by the user."}), 200
     except Exception as e:
         # Log the error for debugging purposes
         print(f"An error occurred: {str(e)}")
+        progress_state.update({'active': False, 'status': 'error'})
         # Send an error message to the frontend
         socketio.emit('error', {'message': str(e)})
 
     flash("Processed successfully!")
+    progress_state.update({'active': False, 'status': 'complete'})
     socketio.emit('update', {"message": "Processing Ended"})
     return jsonify({"message": "Processing Ended"}), 200
+
+
+@socketio.on('connect')
+def handle_socket_connect():
+    emit('progress_state', progress_state)
 
 
 @app.route('/download_failed_sites')
