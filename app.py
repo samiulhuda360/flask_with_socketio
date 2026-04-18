@@ -29,13 +29,14 @@ api_key = os.getenv("WEBSHARE_API_KEY")
 print(api_key)
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins=os.getenv('CORS_ORIGINS', '*'), async_mode='threading')
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
-app.config['SESSION_COOKIE_SAMESITE'] = "Lax"  # or "None" if necessary
-app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
-app.secret_key = 'sdfadfasdfasdfasdfasdf'
+app.secret_key = os.getenv('FLASK_SECRET_KEY') or os.urandom(32).hex()
 
 uploaded_filename = None
 Exact_MATCH = False
@@ -43,6 +44,7 @@ SKIP_COM_AU = False
 ONLY_COM_AU = False
 NO_BODY_IMAGE = False
 SKIP_USED_DOMAINS = False
+should_continue_processing = False
 
 progress_state = {
     'active': False,
@@ -111,6 +113,7 @@ def get_link_list_from_db(host_url):
     return links
 
 @app.route('/save_api_config', methods=['POST'])
+@login_required
 def save_api_config():
     openai_api = request.form.get('openaiapi')
     pexels_api = request.form.get('pexelsapi')
@@ -142,6 +145,7 @@ def save_api_config():
 
 # Flask route to handle site deletion
 @app.route('/delete-site', methods=['DELETE'])
+@login_required
 def delete_site_route():
     sitename = request.args.get('sitename')
     if not sitename or sitename == "all":
@@ -153,6 +157,7 @@ def delete_site_route():
 
 
 @app.route('/download_excel')
+@login_required
 def download_excel():
     global uploaded_filename
     print(uploaded_filename)
@@ -184,6 +189,7 @@ def delete_all_excel_files():
 
 
 @app.route('/get_files')
+@login_required
 def get_files():
     # List all files in the UPLOAD_FOLDER
     files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
@@ -195,13 +201,19 @@ def get_files():
     return jsonify(files)
 
 @app.route('/download_excel_from_file')
+@login_required
 def download_excel_from_file():
-    filename = request.args.get('filename')
-    if filename:
-        return send_from_directory(directory=app.config['UPLOAD_FOLDER'], path=filename, as_attachment=True)
-    return "File not found", 404
+    filename = request.args.get('filename', '')
+    safe_name = secure_filename(filename)
+    if not safe_name or safe_name != filename:
+        return "File not found", 404
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
+    if not os.path.isfile(file_path):
+        return "File not found", 404
+    return send_from_directory(directory=app.config['UPLOAD_FOLDER'], path=safe_name, as_attachment=True)
 
 @app.route('/failed_csv')
+@login_required
 def failed_site_download_excel():
     # Specify the file path where the Excel file is saved
     failed_csv_file_path = 'failed_urls.csv'  # Adjust the path as needed
@@ -213,6 +225,7 @@ def failed_site_download_excel():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/uploaded_excel')
+@login_required
 def uploaded_download_excel():
     # Specify the file path where the Excel file is saved
     uploaded_excel_file_path = 'uploads/uploaded_excel.xlsx'  # Adjust the path as needed
@@ -345,6 +358,7 @@ def site_manager():
 
 
 @app.route('/restapi_test')
+@login_required
 def test_page():
     sitename_filter = request.args.get('sitename_filter', None)
 
@@ -499,6 +513,7 @@ def update_excel_with_live_link(file_path, row_index, live_url):
     wb.save(file_path)
 
 @app.route('/stop_processing', methods=['POST'])
+@login_required
 def stop_processing():
     global should_continue_processing
     should_continue_processing = False
@@ -506,6 +521,7 @@ def stop_processing():
 
 
 @app.route('/start_emit', methods=['POST'])
+@login_required
 def start_emit():
     global should_continue_processing
     global USE_IMAGES
@@ -702,7 +718,7 @@ def start_emit():
                     time.sleep(1)
 
                     data_list.append(data)
-                    socketio.emit('update', {'data': json.dumps(data_list)})
+                    socketio.emit('update', {'data': json.dumps([data])})
 
 
                     link_posted = True
@@ -742,10 +758,13 @@ def start_emit():
 
 @socketio.on('connect')
 def handle_socket_connect():
+    if 'logged_in' not in session:
+        return False  # reject unauthenticated socket
     emit('progress_state', progress_state)
 
 
 @app.route('/download_failed_sites')
+@login_required
 def download_failed_sites():
     # Specify the file path where the Excel file is saved
     failed_csv_file_path = 'failed_sites.xlsx'  # Adjust the path as needed
@@ -757,6 +776,7 @@ def download_failed_sites():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/download_excel_template')
+@login_required
 def download_excel_template():
     # Specify the file path where the Excel file is saved
     excel_template_file_path = 'excel_template_pbn.xlsx'  # Adjust the path as needed
@@ -769,11 +789,15 @@ def download_excel_template():
     
     
 @app.route('/post_delete', methods=['GET'])
+@login_required
 def post_delete():
     return render_template('post_delete.html')
 
 @socketio.on('delete_request')
 def handle_delete_request(data):
+    if 'logged_in' not in session:
+        emit('error', {'message': 'Not authenticated'})
+        return
     urls = data['urls']
 
     conn = sqlite3.connect('sites_data.db')
@@ -843,6 +867,7 @@ def export_to_excel(db_name, excel_file):
     conn.close()
 
 @app.route('/download-excel-alldata')
+@login_required
 def download_excel_alldata():
     excel_file = 'sites_data.xlsx'
     export_to_excel('sites_data.db', excel_file)
@@ -866,6 +891,7 @@ def export_sites_only_to_excel(db_name, excel_file):
 
 
 @app.route('/download-excel-sites')
+@login_required
 def download_excel_sites():
     excel_file = 'sites_list.xlsx'
     export_sites_only_to_excel('sites_data.db', excel_file)

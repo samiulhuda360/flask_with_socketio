@@ -72,11 +72,11 @@
                     <form action="/save_api_config" method="post">
                         <div class="mb-3">
                             <label for="openaiapi" class="form-label text-muted small">OpenAI API Key</label>
-                            <input type="text" class="form-control" id="openaiapi" name="openaiapi">
+                            <input type="password" class="form-control" id="openaiapi" name="openaiapi" autocomplete="off">
                         </div>
                         <div class="mb-3">
                             <label for="pexelsapi" class="form-label text-muted small">Pexels API Key</label>
-                            <input type="text" class="form-control" id="pexelsapi" name="pexelsapi">
+                            <input type="password" class="form-control" id="pexelsapi" name="pexelsapi" autocomplete="off">
                         </div>
                         <button type="submit" class="btn btn-primary">Update</button>
                     </form>
@@ -93,11 +93,15 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted small">OpenAI API</label>
-                        <div class="bg-light border rounded p-2 text-break" style="font-family: monospace; font-size: 0.85rem;">{{ openai_api }}</div>
+                        <div class="bg-light border rounded p-2 text-break" style="font-family: monospace; font-size: 0.85rem;">
+                            {% if openai_api %}{{ openai_api[:7] }}{{ '*' * 10 }}{{ openai_api[-4:] }}{% else %}<em class="text-muted">Not set</em>{% endif %}
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted small">Pexels API</label>
-                        <div class="bg-light border rounded p-2 text-break" style="font-family: monospace; font-size: 0.85rem;">{{ pexels_api }}</div>
+                        <div class="bg-light border rounded p-2 text-break" style="font-family: monospace; font-size: 0.85rem;">
+                            {% if pexels_api %}{{ pexels_api[:4] }}{{ '*' * 10 }}{{ pexels_api[-4:] }}{% else %}<em class="text-muted">Not set</em>{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh root@64.227.148.94 \"/root/flask_with_socketio/myenv/bin/pip show httpx openai 2>&1 | grep -E 'Name|Version'\")",
+      "Bash(ssh root@64.227.148.94 \"journalctl -u flask_app --since '5 minutes ago' --no-pager | grep -E 'Error|error|proxies|Exception|Traceback' | tail -20\")",
+      "Bash(ssh root@64.227.148.94 \"journalctl -u flask_app --since '5 minutes ago' --no-pager | tail -15\")",
+      "Bash(ssh root@64.227.148.94 \"/root/flask_with_socketio/myenv/bin/pip install 'httpx<0.28' 2>&1 | tail -5\")",
+      "Bash(ssh root@64.227.148.94 'cd /root/flask_with_socketio && /root/flask_with_socketio/myenv/bin/python -c \" *)",
+      "Bash(ssh root@64.227.148.94 \"systemctl restart flask_app && sleep 2 && systemctl is-active flask_app\")",
+      "Bash(ssh root@64.227.148.94 \"cd /root/flask_with_socketio && git pull 2>&1 | tail -3\")",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(ssh root@64.227.148.94 \"/root/flask_with_socketio/myenv/bin/pip index versions openai 2>&1 | head -5\")",
+      "Bash(ssh root@64.227.148.94 \"/root/flask_with_socketio/myenv/bin/pip install --upgrade 'openai==1.109.1' 'httpx>=0.28' 2>&1 | tail -8\")",
+      "Bash(ssh root@64.227.148.94 \"ls -la /root/flask_with_socketio/ | grep -iE 'upload|xlsx' | head -20; echo '---'; grep -n 'UPLOAD_FOLDER' /root/flask_with_socketio/app.py | head -5\")",
+      "Bash(ssh root@64.227.148.94 \"ls -lat /root/flask_with_socketio/uploads/ | head -10\")",
+      "Bash(ssh root@64.227.148.94 \"curl -s -b /tmp/cookies -c /tmp/cookies -X POST http://127.0.0.1:8000/login -d 'username=admin&password=admin' -o /dev/null; curl -s -b /tmp/cookies http://127.0.0.1:8000/get_files\")",
+      "Bash(grep -n \"open\\\\|execute\\\\|subprocess\\\\|f\\\\\\\\\\\\\"\\\\|%\\\\s\" app.py services.py sqlite_op.py)",
+      "Bash(grep -E \"\\\\.\\(css|js\\)$\")"
+    ]
+  }
+}

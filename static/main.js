@@ -97,7 +97,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function createAndAppendTableRows(dataJSON) {
         const tableBody = document.querySelector('#dataTable tbody');
-        tableBody.innerHTML = '';
         dataJSON.forEach(dataItem => {
             const row = createElement('tr', {}, []);
             ['id', 'anchor', 'linking_url', 'topic', 'live_url', 'Host_site'].forEach(column => {
