@@ -53,6 +53,8 @@ progress_state = {
     'status': 'idle',
 }
 
+posted_rows = []
+
 
 def snapshot_report(source_path):
     if not source_path or not os.path.exists(source_path):
@@ -518,6 +520,7 @@ def stop_processing():
     global should_continue_processing
     should_continue_processing = False
     progress_state.update({'active': False, 'current': 0, 'total': 0, 'status': 'idle'})
+    posted_rows.clear()
     socketio.emit('progress_reset')
     return jsonify({"message": "Processing stopped."}), 200
 
@@ -559,6 +562,7 @@ def start_emit():
 
     # Create an empty list to accumulate the data
     data_list = []
+    posted_rows.clear()
     sitenames = get_all_sitenames()
     num_sites = len(sitenames)
 
@@ -713,6 +717,7 @@ def start_emit():
                     time.sleep(1)
 
                     data_list.append(data)
+                    posted_rows.append(data)
                     socketio.emit('update', {'data': json.dumps([data])})
 
 
@@ -758,6 +763,8 @@ def handle_socket_connect():
     if 'logged_in' not in session:
         return False  # reject unauthenticated socket
     emit('progress_state', progress_state)
+    if posted_rows:
+        emit('update', {'data': json.dumps(posted_rows)})
 
 
 @app.route('/download_failed_sites')
