@@ -38,6 +38,19 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 app.secret_key = os.getenv('FLASK_SECRET_KEY') or os.urandom(32).hex()
 
+
+@app.context_processor
+def _static_cache_buster():
+    def versioned_url_for(endpoint, **values):
+        if endpoint == 'static':
+            filename = values.get('filename')
+            if filename:
+                fp = os.path.join(app.root_path, 'static', filename)
+                if os.path.exists(fp):
+                    values['v'] = int(os.stat(fp).st_mtime)
+        return url_for(endpoint, **values)
+    return {'url_for': versioned_url_for}
+
 uploaded_filename = None
 Exact_MATCH = False
 SKIP_COM_AU = False
