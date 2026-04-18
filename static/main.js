@@ -108,12 +108,34 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // Progress bar helpers
+    function showProgressBar() {
+        document.getElementById("progressBarWrapper").style.display = "block";
+    }
+    function updateProgressBar(current, total) {
+        const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+        const bar = document.getElementById("progressBar");
+        bar.style.width = pct + "%";
+        bar.setAttribute("aria-valuenow", pct);
+        document.getElementById("progressCurrent").innerText = current;
+        document.getElementById("progressTotal").innerText = total;
+        document.getElementById("progressPercent").innerText = pct + "%";
+        document.getElementById("progressLabel").innerText =
+            current < total ? "Posting links..." : "Complete";
+        if (current >= total && total > 0) {
+            bar.classList.remove("progress-bar-animated");
+            bar.classList.add("bg-success");
+        }
+    }
+
     // Form submission handling
     const form = document.getElementById("uploadForm");
     form.addEventListener("submit", function(e) {
         e.preventDefault();
         const formData = new FormData(this);
-        document.getElementById("progress").style.display = "block";
+        showProgressBar();
+        document.getElementById("progressLabel").innerText = "Uploading & analyzing file...";
+        document.getElementById("progress").style.display = "flex";
         fetch('/start_emit', {
             method: 'POST',
             body: formData
@@ -131,6 +153,17 @@ document.addEventListener("DOMContentLoaded", function() {
         'reconnection': true,
         'reconnectionDelay': 500,
         'reconnectionAttempts': 5
+    });
+
+    socket.on('progress_init', function(data) {
+        showProgressBar();
+        updateProgressBar(0, data.total || 0);
+        document.getElementById("progressLabel").innerText =
+            (data.total > 0) ? "Preparing — " + data.total + " links queued" : "No rows to post";
+    });
+
+    socket.on('progress_tick', function(data) {
+        updateProgressBar(data.current || 0, data.total || 0);
     });
 
     socket.on('update', function(data) {

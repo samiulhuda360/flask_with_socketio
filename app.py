@@ -528,6 +528,13 @@ def start_emit():
     total_rows = len(rows)
     row_index = 0
 
+    total_to_process = sum(
+        1 for r in rows[1:]
+        if r[1] is not None and r[2] is not None and (r[9] is None or r[9] == "Failed To Post")
+    )
+    processed_count = 0
+    socketio.emit('progress_init', {'total': total_to_process})
+
     last_used_site_index = -1  # Start with -1 so that for the first row, it starts with 0.
     with open('failed_urls.csv', 'a', newline='') as f:
         writer = csv.writer(f)
@@ -678,6 +685,9 @@ def start_emit():
             if not link_posted:
                 print("All Sites have this link")
                 pass
+
+            processed_count += 1
+            socketio.emit('progress_tick', {'current': processed_count, 'total': total_to_process})
 
             row_index += 1
 

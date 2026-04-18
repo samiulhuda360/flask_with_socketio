@@ -135,3 +135,54 @@ select.form-control {
 body.bg-light {
     background-color: #f4f6fa !important;
 }
+
+/* ---------- Tech progress bar ---------- */
+.progress-wrapper {
+    width: 100%;
+}
+
+.progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+}
+
+#progressStats {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: #0f172a;
+}
+
+.progress-tech {
+    height: 14px;
+    background-color: #eef2f7;
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.progress-tech .progress-bar {
+    background-image: linear-gradient(90deg, #0ea5e9 0%, #6366f1 50%, #8b5cf6 100%);
+    background-size: 200% 100%;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.45);
+    position: relative;
+}
+
+.progress-tech .progress-bar.progress-bar-animated {
+    animation: techShimmer 2s linear infinite, progress-bar-stripes 1s linear infinite;
+}
+
+.progress-tech .progress-bar.bg-success {
+    background-image: linear-gradient(90deg, #22c55e 0%, #16a34a 100%) !important;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);
+}
+
+@keyframes techShimmer {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
