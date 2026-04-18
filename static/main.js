@@ -160,11 +160,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     // Progress spinner and text setup
-    const progressDiv = createElement('div', {id: 'progress', style: 'display: none'});
-    const spinner = createElement('div', {className: 'spinner-border text-primary', role: 'status'});
-    const span = createElement('span', {className: 'sr-only', innerText: 'Processing...'});
-    const progressText = createElement('h3', {id: 'progressText', innerText: 'Processing...'});
-    progressText.style.color = 'red';
+    const progressDiv = createElement('div', {id: 'progress', className: 'd-flex align-items-center gap-2', style: 'display: none'});
+    const spinner = createElement('div', {className: 'spinner-border spinner-border-sm text-primary', role: 'status'});
+    const span = createElement('span', {className: 'visually-hidden', innerText: 'Processing...'});
+    const progressText = createElement('span', {id: 'progressText', className: 'fw-semibold text-primary', innerText: 'Processing...'});
     spinner.appendChild(span);
     progressDiv.appendChild(spinner);
     progressDiv.appendChild(progressText);
