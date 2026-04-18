@@ -1,6 +1,8 @@
 import os
 import time
 import csv
+import shutil
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash, url_for, send_from_directory
 from flask import stream_with_context, Response
 from services import (get_all_sitenames, get_url_data_from_db, process_site, store_posted_url, extract_domain, delete_site_and_links, fetch_site_details, test_post_to_wordpress, delete_from_wordpress, find_post_id_by_url)
@@ -48,6 +50,17 @@ progress_state = {
     'total': 0,
     'status': 'idle',
 }
+
+
+def snapshot_report(source_path):
+    if not source_path or not os.path.exists(source_path):
+        return None
+    folder = os.path.dirname(source_path)
+    base, ext = os.path.splitext(os.path.basename(source_path))
+    stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    dest = os.path.join(folder, f"{base}_report_{stamp}{ext}")
+    shutil.copy2(source_path, dest)
+    return os.path.basename(dest)
 
 
 
@@ -709,17 +722,20 @@ def start_emit():
             print("Process stopped")
             flash("Process stopped")
             progress_state.update({'active': False, 'status': 'stopped'})
+            snapshot_report(file_path)
             socketio.emit('update', {"message": "Process stopped"})
             return jsonify({"message": "Processing was halted by the user."}), 200
     except Exception as e:
         # Log the error for debugging purposes
         print(f"An error occurred: {str(e)}")
         progress_state.update({'active': False, 'status': 'error'})
+        snapshot_report(file_path)
         # Send an error message to the frontend
         socketio.emit('error', {'message': str(e)})
 
     flash("Processed successfully!")
     progress_state.update({'active': False, 'status': 'complete'})
+    snapshot_report(file_path)
     socketio.emit('update', {"message": "Processing Ended"})
     return jsonify({"message": "Processing Ended"}), 200
 
