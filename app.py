@@ -762,9 +762,12 @@ def start_emit():
 def handle_socket_connect():
     if 'logged_in' not in session:
         return False  # reject unauthenticated socket
-    emit('progress_state', progress_state)
-    if posted_rows:
-        emit('update', {'data': json.dumps(posted_rows)})
+    # Only replay progress + rows while a job is actively running.
+    # After completion/stop, a refresh gives a clean interface.
+    if progress_state.get('active'):
+        emit('progress_state', progress_state)
+        if posted_rows:
+            emit('update', {'data': json.dumps(posted_rows)})
 
 
 @app.route('/download_failed_sites')
